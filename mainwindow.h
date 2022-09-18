@@ -33,6 +33,21 @@ public:
     void handleMenuOpen();
 
     /**
+     * Handles the save as action click
+     */
+    void handleMenuSaveAs();
+
+    /**
+     * Handles the save action click
+     */
+    void handleMenuSave();
+
+    /**
+     * Handles the new action click
+     */
+    void handleMenuNew();
+
+    /**
      * Step the emulator one instruction
      */
     void emulatorStep();
@@ -83,6 +98,7 @@ private:
     QMenu *fileMenu = nullptr;
 
     QAction *saveAction = nullptr;
+    QAction *saveAsAction = nullptr;
     QAction *newAction = nullptr;
     QAction *openAction = nullptr;
 

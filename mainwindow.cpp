@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QDockWidget>
 #include <QFontDialog>
+#include <QShortcut>
 
 #include <fstream>
 
@@ -185,6 +186,37 @@ void MainWindow::handleMenuOpen(){
     }
 }
 
+void MainWindow::handleMenuNew(){
+    editor -> setPlainText(QString());
+    editor -> setDocumentTitle("");
+}
+
+void MainWindow::handleMenuSaveAs(){
+    openDialog = new QFileDialog(this);
+    openDialog -> setNameFilter(tr("Assembly Files (*.s);;C Source Files (*.c);;C Header Files (*.h);;Any File(*)"));
+    openDialog -> setViewMode(QFileDialog::Detail);
+    QStringList fileNames;
+    if (openDialog -> exec()){
+        fileNames = openDialog -> selectedFiles();
+
+        std::ofstream newFile;
+        newFile.open(fileNames[0].toStdString(), ios::out);
+        newFile << editor ->toPlainText().toStdString();
+
+        editor -> setDocumentTitle(fileNames[0]);
+    }
+}
+
+void MainWindow::handleMenuSave(){
+    if(editor -> documentTitle() == "") this -> handleMenuSaveAs();
+    else{
+
+        std::ofstream newFile;
+        newFile.open(editor -> documentTitle().toStdString(), ios::out);
+        newFile << editor ->toPlainText().toStdString();
+    }
+}
+
 
 /**
  * Slot for the emulator step button
@@ -234,17 +266,28 @@ MainWindow::MainWindow(QWidget *parent)
     connect(emulator_controls_tab, &QDockWidget::topLevelChanged, this, &MainWindow::updateDockTitleControls);
 
     // Set up menus
+
     newAction = new QAction("New File");
     openAction = new QAction("Open");
     saveAction = new QAction("Save");
+    saveAsAction = new QAction("Save As");
+
+    newAction -> setShortcut(Qt::CTRL | Qt::Key_N);
+    openAction -> setShortcut(Qt::CTRL | Qt::Key_O);
+    saveAction -> setShortcut(Qt::CTRL | Qt::Key_S);
+    saveAsAction -> setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_S);
 
     fileMenu = menuBar()->addMenu(tr("&File"));
 
     fileMenu->addAction(newAction);
     fileMenu->addAction(openAction);
     fileMenu->addAction(saveAction);
+    fileMenu->addAction(saveAsAction);
 
+    connect(newAction, &QAction::triggered, this, &MainWindow::handleMenuNew);
     connect(openAction, &QAction::triggered, this, &MainWindow::handleMenuOpen);
+    connect(saveAsAction, &QAction::triggered, this, &MainWindow::handleMenuSaveAs);
+    connect(saveAction, &QAction::triggered, this, &MainWindow::handleMenuSave);
 
     // Emulator controls
     connect(step_button, &QPushButton::clicked, this, &MainWindow::emulatorStep);
@@ -270,7 +313,12 @@ MainWindow::~MainWindow()
     delete emulator_controls_tab;
 
     delete saveAction;
+    delete saveAsAction;
+    delete newAction;
+    delete openAction;
     delete fileMenu;
+
+    delete openDialog;
 
     delete ui;
 }
