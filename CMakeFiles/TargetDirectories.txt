@@ -1,0 +1,4 @@
+C:/Users/egef/Documents/DEV/C++/6502-emulator/6502Emulator/CMakeFiles/6502Emulator.dir
+C:/Users/egef/Documents/DEV/C++/6502-emulator/6502Emulator/CMakeFiles/INSTALL.dir
+C:/Users/egef/Documents/DEV/C++/6502-emulator/6502Emulator/CMakeFiles/ALL_BUILD.dir
+C:/Users/egef/Documents/DEV/C++/6502-emulator/6502Emulator/CMakeFiles/ZERO_CHECK.dir
