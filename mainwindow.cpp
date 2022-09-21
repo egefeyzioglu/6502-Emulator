@@ -345,9 +345,7 @@ void MainWindow::setUpEditor(QTextEdit *&editor){
     editor = new QTextEdit();
 
     QFont font("Consolas");
-    QTextCharFormat format;
-    format.setFont(font);
-    editor->mergeCurrentCharFormat(format);
+    editor -> document() -> setDefaultFont(font);
 
     this -> connect(editor, &QTextEdit::textChanged, this, &MainWindow::updateOpenFileContents);
 
