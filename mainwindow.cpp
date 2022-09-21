@@ -8,8 +8,11 @@
 #include <QDockWidget>
 #include <QFontDialog>
 #include <QShortcut>
+#include <QMessageBox>
 
 #include <fstream>
+#include <algorithm>
+#include <filesystem>
 
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
@@ -164,13 +167,15 @@ void MainWindow::updateDockTitleControls(bool isFloating){
 // Menu slots
 
 void MainWindow::handleMenuOpen(){
+    // Create a file picker dialog
     openDialog = new QFileDialog(this);
     openDialog -> setNameFilter(tr("Assembly Files (*.s);;C Source Files (*.c);;C Header Files (*.h);;Any File(*)"));
     openDialog -> setViewMode(QFileDialog::Detail);
     QStringList fileNames;
-    if (openDialog -> exec()){
+    if (openDialog -> exec()){ // If the user picked a file,
         fileNames = openDialog -> selectedFiles();
 
+        // Open and read the file into contents
         std::string contents;
         std::string line;
 
@@ -181,59 +186,171 @@ void MainWindow::handleMenuOpen(){
             contents += line + "\n";
         }
 
+        // Create a new LoadedFile object to be inserted into loadedFiles
+        LoadedFile newFileObj;
+
+        // Break down the path to the file name and directory
+        auto newFilePathObj = std::filesystem::path(fileNames[0] . toStdString());
+        std::string newFileName = newFilePathObj.stem().u8string();
+        std::string newFilePath = newFilePathObj.parent_path().u8string();
+
+        // Populate the LoadedFile object and insert it into the loadedFiles vector
+        newFileObj.fileName = QString::fromStdString(newFileName);
+        newFileObj.fullPath = newFilePath + SLASH + newFileName;
+        newFileObj.contents = QString::fromStdString(contents);
+        newFileObj.savedSinceLastEdit = false;
+        loadedFiles -> push_back(newFileObj);
+
+        // Add the file as an option to fileDropdown
+        fileDropdown -> addItem(fileNames[0]);
+        fileDropdown -> setCurrentIndex(fileDropdown -> count() - 1);
+
+        // Update the editor
         editor -> setPlainText(QString::fromUtf8(contents.data(), contents.length()));
         editor -> setDocumentTitle(fileNames[0]);
     }
 }
 
 void MainWindow::handleMenuNew(){
+    // The new file will be named "Untitled" then a number if there is already a file named that
+    QString kNewFileName = "Untitled";
+    QString kNewFileExtension = ".s";
+
+    // The number of files open named the new file name
+    int untitledCount = std::count_if(loadedFiles -> begin(), loadedFiles -> end(), [=](LoadedFile file){return file.fileName.startsWith(kNewFileName);});
+
+    // Set the new document name to the new file name, then maybe a number
+    editor -> setDocumentTitle(kNewFileName
+                               + (untitledCount != 0 ?  QString("_") + QString::number(untitledCount) : "")
+                               + kNewFileExtension);
+    // Store new file name and contents
+    LoadedFile newFileObj;
+    newFileObj.fileName = editor -> documentTitle();
+    newFileObj.fullPath = "";
+    newFileObj.contents = QString(); // Assumed empty string since the editor still has the old contents at this point
+    newFileObj.savedSinceLastEdit = false;
+    loadedFiles -> push_back(newFileObj);
+
+    // Add the file as an option to fileDropdown
+    fileDropdown -> addItem(editor -> documentTitle());
+    fileDropdown -> setCurrentIndex(fileDropdown -> count() - 1);
+
+    // Clear the editor
     editor -> setPlainText(QString());
-    editor -> setDocumentTitle("");
+    // Trigger text change (since that doesn't happen automatically for some reason?)
+    this -> updateOpenFileContents();
+
 }
 
 void MainWindow::handleMenuSaveAs(){
+    // Create a new file picker dialog
     openDialog = new QFileDialog(this);
     openDialog -> setNameFilter(tr("Assembly Files (*.s);;C Source Files (*.c);;C Header Files (*.h);;Any File(*)"));
     openDialog -> setViewMode(QFileDialog::Detail);
     QStringList fileNames;
-    if (openDialog -> exec()){
+    if (openDialog -> exec()){ // If the user picks a file
         fileNames = openDialog -> selectedFiles();
 
+        // Open the file and write to it
         std::ofstream newFile;
         newFile.open(fileNames[0].toStdString(), ios::out);
         newFile << editor ->toPlainText().toStdString();
 
+        // Update the editor title
         editor -> setDocumentTitle(fileNames[0]);
+
+        // Get the current LoadedFile object from loadedFiles and update it
+        LoadedFile &file = loadedFiles -> at(fileDropdown ->currentIndex());
+        auto newFilePathObj = std::filesystem::path(fileNames[0] . toStdString());
+        std::string newFileName = newFilePathObj.stem().u8string();
+        file.fileName = QString::fromStdString(newFileName);
+        file.fullPath = fileNames[0].toStdString();
+        file.savedSinceLastEdit = true;
+
+        // Update the fileDropdown item
+        fileDropdown -> setItemText(fileDropdown ->currentIndex(), fileNames[0]);
+
     }
 }
 
 void MainWindow::handleMenuSave(){
-    if(editor -> documentTitle() == "") this -> handleMenuSaveAs();
+    // The fullPath property is never set (initialised to empty string) if we've never saved before
+    // If so, treat this as Save As
+    if(loadedFiles -> at(fileDropdown -> currentIndex()).fullPath == "") this -> handleMenuSaveAs();
     else{
-
+        // Otherwise, open the file and write to it
         std::ofstream newFile;
         newFile.open(editor -> documentTitle().toStdString(), ios::out);
         newFile << editor ->toPlainText().toStdString();
+        loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit = true;
     }
 }
 
+void MainWindow::handleMenuClose(){
+    // If we don't have any files, return (this could happen if the user spams Ctrl + W)
+    if(loadedFiles->size() == 0) return;
 
-/**
- * Slot for the emulator step button
- *
- */
+    // See if the current file was saved before the last edit
+    if(loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit){ // If it has, delete it
+        // Erase the loadedFiles object and remove item from dropdown (TODO: Check if file was saved and ask to confirm if it wasn't)
+        loadedFiles->erase(loadedFiles->begin() + fileDropdown -> currentIndex());
+        fileDropdown -> removeItem(fileDropdown -> currentIndex());
+
+        // If we ran out of files, create a new one
+        if(loadedFiles->size() == 0) handleMenuNew();
+    }else{ // If it hasn't been saved, ask if the user wants to
+        // Create a message box
+        QMessageBox confirm;
+        confirm.setText("Save file " + loadedFiles -> at(fileDropdown -> currentIndex()).fileName + "?");
+        confirm.setIcon(QMessageBox::Question);
+        confirm.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        confirm.setDefaultButton(QMessageBox::Save);
+        int answer = confirm.exec();
+
+        switch(answer){
+        case QMessageBox::Save:     // If user wants to save,
+            handleMenuSave();       // do so.
+            // Call this function again (If the file was saved we won't get here)
+            handleMenuClose();
+            break;
+        case QMessageBox::Discard:  // If the user doesn't want to save, don't save.
+                                    // Pretend the file was saved
+            loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit = true;
+            // Call this function again (we marked the file as saved so we won't reach here)
+            handleMenuClose();
+            break;
+        case QMessageBox::Cancel:   // If the user wants to cancel or
+        default:                    // or if we got an answer we don't recognise,
+            return;                 // do nothing
+        }
+    }
+}
+
+void MainWindow::updateOpenFileContents(){
+    auto currentFile = this -> loadedFiles -> at(this -> fileDropdown -> currentIndex());
+    currentFile.contents = this -> editor -> toPlainText();
+    currentFile.savedSinceLastEdit = false;
+}
+
+void MainWindow::updateOpenFile(int selectedFileIndex){
+    if(loadedFiles->size() > 0) this -> editor -> setPlainText(this -> loadedFiles -> at(selectedFileIndex).contents);
+}
+
 void MainWindow::emulatorStep(){
     Log::Info() << "Step clicked";
     emulator->step();
 }
 
-void MainWindow::setUpEditor(QPlainTextEdit *&editor){
-    editor = new QPlainTextEdit();
+void MainWindow::setUpEditor(QTextEdit *&editor){
+    editor = new QTextEdit();
 
     QFont font("Consolas");
     QTextCharFormat format;
     format.setFont(font);
     editor->mergeCurrentCharFormat(format);
+
+    this -> connect(editor, &QTextEdit::textChanged, this, &MainWindow::updateOpenFileContents);
+
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -271,11 +388,13 @@ MainWindow::MainWindow(QWidget *parent)
     openAction = new QAction("Open");
     saveAction = new QAction("Save");
     saveAsAction = new QAction("Save As");
+    closeAction = new QAction("Close");
 
     newAction -> setShortcut(Qt::CTRL | Qt::Key_N);
     openAction -> setShortcut(Qt::CTRL | Qt::Key_O);
     saveAction -> setShortcut(Qt::CTRL | Qt::Key_S);
     saveAsAction -> setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_S);
+    closeAction -> setShortcut(Qt::CTRL | Qt::Key_W);
 
     fileMenu = menuBar()->addMenu(tr("&File"));
 
@@ -283,11 +402,24 @@ MainWindow::MainWindow(QWidget *parent)
     fileMenu->addAction(openAction);
     fileMenu->addAction(saveAction);
     fileMenu->addAction(saveAsAction);
+    fileMenu->addAction(closeAction);
 
     connect(newAction, &QAction::triggered, this, &MainWindow::handleMenuNew);
     connect(openAction, &QAction::triggered, this, &MainWindow::handleMenuOpen);
     connect(saveAsAction, &QAction::triggered, this, &MainWindow::handleMenuSaveAs);
     connect(saveAction, &QAction::triggered, this, &MainWindow::handleMenuSave);
+    connect(closeAction, &QAction::triggered, this, &MainWindow::handleMenuClose);
+
+    // Toolbar
+    toolBar = new QToolBar();
+    fileDropdown =  new QComboBox();
+    fileDropdown -> setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    fileDropdownAction = toolBar -> addWidget(fileDropdown);
+
+    loadedFiles = new std::vector<LoadedFile>;
+
+    connect(fileDropdown, &QComboBox::currentIndexChanged, this, &MainWindow::updateOpenFile);
+
 
     // Emulator controls
     connect(step_button, &QPushButton::clicked, this, &MainWindow::emulatorStep);
@@ -297,8 +429,12 @@ MainWindow::MainWindow(QWidget *parent)
     this -> addDockWidget(Qt::LeftDockWidgetArea, memory_tab);
     this -> addDockWidget(Qt::RightDockWidgetArea, register_tab);
     this -> addDockWidget(Qt::RightDockWidgetArea, emulator_controls_tab);
+    this -> addToolBar(toolBar);
 
     this -> show();
+
+    // Start with a blank document
+    handleMenuNew();
 }
 
 MainWindow::~MainWindow()
@@ -316,7 +452,14 @@ MainWindow::~MainWindow()
     delete saveAsAction;
     delete newAction;
     delete openAction;
+    delete closeAction;
     delete fileMenu;
+
+    delete toolBar;
+    delete fileDropdown;
+    delete fileDropdownAction;
+
+    delete loadedFiles;
 
     delete openDialog;
 

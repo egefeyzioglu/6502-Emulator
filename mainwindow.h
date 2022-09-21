@@ -3,9 +3,13 @@
 
 #include <QMainWindow>
 #include <QTableWidget>
-#include <QPlainTextEdit>
+#include <QTextEdit>
 #include <QPushButton>
 #include <QFileDialog>
+#include <QToolBar>
+#include <QComboBox>
+
+#include "loadedfile.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -48,6 +52,21 @@ public:
     void handleMenuNew();
 
     /**
+     * Handles the close action click
+     */
+    void handleMenuClose();
+
+    /**
+     * Updates the current open file contents in openFileContents
+     */
+    void updateOpenFileContents();
+
+    /**
+     * Update the current file displayed by the editor
+     */
+    void updateOpenFile(int selectedFileIndex);
+
+    /**
      * Step the emulator one instruction
      */
     void emulatorStep();
@@ -75,7 +94,7 @@ public:
      *
      * @param editor
      */
-    void setUpEditor(QPlainTextEdit *&editor);
+    void setUpEditor(QTextEdit *&editor);
 
     /**
      * The main window title
@@ -89,7 +108,7 @@ private:
     QTableWidget *memory_table = nullptr;
     QTableWidget *register_table = nullptr;
     QPushButton *step_button = nullptr;
-    QPlainTextEdit *editor = nullptr;
+    QTextEdit *editor = nullptr;
 
     QDockWidget *register_tab = nullptr;
     QDockWidget *memory_tab = nullptr;
@@ -101,6 +120,13 @@ private:
     QAction *saveAsAction = nullptr;
     QAction *newAction = nullptr;
     QAction *openAction = nullptr;
+    QAction *closeAction = nullptr;
+
+    QToolBar *toolBar = nullptr;
+    QComboBox *fileDropdown = nullptr;
+    QAction *fileDropdownAction = nullptr;
+
+    std::vector<LoadedFile> *loadedFiles = nullptr;
 
     QFileDialog *openDialog = nullptr;
 };

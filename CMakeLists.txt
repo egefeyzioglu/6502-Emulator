@@ -27,6 +27,7 @@ set(PROJECT_SOURCES
         resources.qrc
         log.h
         log.cpp
+        loadedfile.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
