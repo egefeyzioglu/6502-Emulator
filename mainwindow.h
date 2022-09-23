@@ -10,6 +10,7 @@
 #include <QComboBox>
 
 #include "loadedfile.h"
+#include "syntaxhighlighter.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -129,5 +130,7 @@ private:
     std::vector<LoadedFile> *loadedFiles = nullptr;
 
     QFileDialog *openDialog = nullptr;
+
+    SyntaxHighlighter *syntaxHighlighter = nullptr;
 };
 #endif // MAINWINDOW_H

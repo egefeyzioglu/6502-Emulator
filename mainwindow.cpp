@@ -342,7 +342,11 @@ void MainWindow::emulatorStep(){
 }
 
 void MainWindow::setUpEditor(QTextEdit *&editor){
+    // Create editor
     editor = new QTextEdit();
+
+    // Create syntax highlighter, apply to the editor's document
+    syntaxHighlighter = new SyntaxHighlighter(editor -> document());
 
     QFont font("Consolas");
     editor -> document() -> setDefaultFont(font);
@@ -460,6 +464,8 @@ MainWindow::~MainWindow()
     delete loadedFiles;
 
     delete openDialog;
+
+    delete syntaxHighlighter;
 
     delete ui;
 }

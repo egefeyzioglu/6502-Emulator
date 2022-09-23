@@ -28,6 +28,8 @@ set(PROJECT_SOURCES
         log.h
         log.cpp
         loadedfile.h
+        syntaxhighlighter.h
+        syntaxhighlighter.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
