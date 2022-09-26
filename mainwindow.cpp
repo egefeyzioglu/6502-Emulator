@@ -17,7 +17,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "emulator.h"
-#include "log.h"
 #include "memorymodel.h"
 
 #define CEIL_DIVIDE_INT(x, y) x / y + (x % y > 0)
@@ -327,7 +326,6 @@ void MainWindow::updateOpenFile(int selectedFileIndex){
 }
 
 void MainWindow::emulatorStep(){
-    Log::Info() << "Step clicked";
     emulator->step();
 }
 
