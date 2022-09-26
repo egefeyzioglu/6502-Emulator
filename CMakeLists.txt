@@ -30,6 +30,8 @@ set(PROJECT_SOURCES
         loadedfile.h
         syntaxhighlighter.h
         syntaxhighlighter.cpp
+        memorymodel.h
+        memorymodel.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

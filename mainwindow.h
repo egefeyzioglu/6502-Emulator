@@ -11,6 +11,7 @@
 
 #include "loadedfile.h"
 #include "syntaxhighlighter.h"
+#include "memorymodel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -73,13 +74,11 @@ public:
     void emulatorStep();
 
     /**
-     * Updates the memory view QTableWidget object, reads from emulator using getMemoryValue
-     *
-     * TODO: Don't destroy the QTableWidget every time
+     * Sets up the memory view QTableView object
      *
      * @param memory_table
      */
-    void updateMemoryTable(QTableWidget *&memory_table);
+    void setUpMemoryTable(QTableView *&memory_view);
 
     /**
      * Updates the register view QTableWidget object, reads from emulator using getMemoryValue
@@ -105,8 +104,8 @@ public:
 private:
     Ui::MainWindow *ui;
 
-
-    QTableWidget *memory_table = nullptr;
+    QTableView *memory_view;
+    MemoryModel *memory_model;
     QTableWidget *register_table = nullptr;
     QPushButton *step_button = nullptr;
     QTextEdit *editor = nullptr;

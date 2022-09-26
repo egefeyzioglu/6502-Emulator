@@ -40,7 +40,7 @@ public:
     void step();
 
 
-    #define lowerMemory
+    //#define lowerMemory
 
     #ifdef lowerMemory
     // Memory size
@@ -49,7 +49,6 @@ public:
     // Memory size
     constexpr static size_t kMemorySize = 0x10000;
     #endif
-
 
 private:
     // The CPU instance

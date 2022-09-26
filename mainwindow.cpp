@@ -18,6 +18,7 @@
 #include "./ui_mainwindow.h"
 #include "emulator.h"
 #include "log.h"
+#include "memorymodel.h"
 
 #define CEIL_DIVIDE_INT(x, y) x / y + (x % y > 0)
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
@@ -41,25 +42,14 @@ extern Emulator *emulator;
  *
  * @param memory_table
  */
-void MainWindow::updateMemoryTable(QTableWidget *&memory_table){
-    delete memory_table; // Deleting nullptr is safe
-    const int kRowCount = CEIL_DIVIDE_INT(emulator -> kMemorySize, 0x10);
-    memory_table = new QTableWidget(kRowCount, 0x10);
-    memory_table->horizontalHeader() -> setSectionResizeMode(QHeaderView::ResizeToContents);
-    for(int row = 0; row < kRowCount; row++){
-        for(int col = 0; col < 0x10; col++){
-            QLabel *cellLabel = new QLabel;
-            QString newLabelString = QString();
-
-            newLabelString = QString::asprintf("%02x", emulator -> getMemoryValue(row * 0x10 + col));
-            cellLabel -> setText(newLabelString);
-
-            newLabelString = QString::asprintf("%04x", row * 0x10);
-            memory_table -> setVerticalHeaderItem(row, new QTableWidgetItem(newLabelString));
-
-            memory_table -> setCellWidget(row, col, cellLabel);
-        }
-    }
+void MainWindow::setUpMemoryTable(QTableView *&memory_view){
+    memory_view = new QTableView();
+    memory_model = new MemoryModel(emulator->kMemorySize, emulator, this);
+    memory_view -> setModel(memory_model);
+    memory_view -> setShowGrid(true);
+    memory_view -> setCornerButtonEnabled(false);
+    memory_view -> setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectItems);
+    memory_view -> setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
 }
 
 /**
@@ -364,7 +354,7 @@ MainWindow::MainWindow(QWidget *parent)
     this -> resize(1200,600);
 
     // Set up the base widgets
-    updateMemoryTable(memory_table); // TODO: Change this to a QDataWidgetMapper loading data from a QAbstractItemModel
+    setUpMemoryTable(memory_view);
     updateRegisterTable(register_table);
     setUpEditor(editor);
 
@@ -376,8 +366,9 @@ MainWindow::MainWindow(QWidget *parent)
     emulator_controls_tab = new QDockWidget("Controls");
 
     emulator_controls_tab -> setWidget(step_button);
-    memory_tab -> setWidget(memory_table);
+    memory_tab -> setWidget(memory_view);
     register_tab -> setWidget(register_table);
+
 
     // Dock widget title updates
     connect(memory_tab, &QDockWidget::topLevelChanged, this, &MainWindow::updateDockTitleMemory);
@@ -439,9 +430,9 @@ MainWindow::MainWindow(QWidget *parent)
     handleMenuNew();
 }
 
-MainWindow::~MainWindow()
-{
-    delete memory_table;
+MainWindow::~MainWindow() {
+    delete memory_view;
+    delete memory_model;
     delete register_table;
     delete step_button;
     delete editor;
@@ -466,6 +457,7 @@ MainWindow::~MainWindow()
     delete openDialog;
 
     delete syntaxHighlighter;
+
 
     delete ui;
 }
