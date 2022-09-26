@@ -29,7 +29,7 @@ QVariant MemoryModel::data(const QModelIndex &index, int role) const{
     }
     // If we have a good index, return
     if(index.isValid() && index.row() < rowCount() && index.row() >= 0 && index.column() < columnCount() && index.column() >= 0){
-        auto ret = QVariant(QString::fromStdString(std::to_string(emulator -> getMemoryValue((index.row()) * columnCount() + index.column()))));
+        auto ret = QVariant(QString("%1").arg((emulator -> getMemoryValue((index.row()) * columnCount() + index.column())), 2, 16, QLatin1Char('0')));
         return ret;
     } else {
         return QVariant();
@@ -39,7 +39,7 @@ QVariant MemoryModel::data(const QModelIndex &index, int role) const{
 bool MemoryModel::setData(const QModelIndex &index, const QVariant &value, int role){
     if(index.isValid() && index.row() < kMemorySize && index.row() >= 0){
         bool ok;
-        int val = value.toUInt(&ok);
+        int val = value.toString().toUInt(&ok, 16);
         if(ok && val < 0x100) {
             emulator -> setMemoryValue((index.row()) * columnCount() + index.column(), val);
             return true;
