@@ -15,6 +15,7 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+    void updateData(QModelIndex topLeft = QModelIndex(), QModelIndex bottomRight = QModelIndex());
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 private:
     const size_t kMemorySize;

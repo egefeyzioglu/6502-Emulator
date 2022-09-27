@@ -51,3 +51,13 @@ bool MemoryModel::setData(const QModelIndex &index, const QVariant &value, int r
 Qt::ItemFlags MemoryModel::flags(const QModelIndex &index) const{
     return Qt::ItemIsEnabled | Qt::ItemIsEditable;
 }
+
+void MemoryModel::updateData(QModelIndex topLeft, QModelIndex bottomRight){
+    if(!topLeft.isValid()){
+        topLeft = index(0,0);
+    }
+    if(!bottomRight.isValid()){
+        bottomRight = index(this -> rowCount(), this -> columnCount());
+    }
+    emit dataChanged(topLeft, bottomRight);
+}

@@ -51,6 +51,10 @@ void Emulator::step(){
     Log::Info() << "Tried to run 1 step, ran " << count << " steps";
 }
 
+void Emulator::resetCPU(){
+    this -> cpu -> Reset();
+}
+
 // The emulator instance registered
 // (Needed to be declared here to avoid double declaration)
 namespace EmulatorHelper{
@@ -72,4 +76,8 @@ uint8_t EmulatorHelper::busRead(uint16_t address){
 
 void EmulatorHelper::busWrite(uint16_t address, uint8_t value){
     emulator -> memory[address] = value;
+}
+
+void EmulatorHelper::replaceMemory(uint8_t *newContents, size_t offset, size_t length){
+    memcpy((emulator -> memory) + offset, newContents, length);
 }

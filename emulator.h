@@ -20,6 +20,8 @@ namespace EmulatorHelper{
     void busWrite(uint16_t address, uint8_t value);
     // Memory - CPU interface, get
     uint8_t busRead(uint16_t address);
+
+    void replaceMemory(uint8_t *newContents, size_t offset, size_t lenght);
 }
 
 // The emulator class
@@ -39,6 +41,9 @@ public:
     // Step one instruction
     void step();
 
+    // Reset the CPU
+    void resetCPU();
+
 
     //#define lowerMemory
 
@@ -49,6 +54,7 @@ public:
     // Memory size
     constexpr static size_t kMemorySize = 0x10000;
     #endif
+    constexpr static size_t kProgMemOffset = 0x5f00;
 
 private:
     // The CPU instance
@@ -61,4 +67,5 @@ private:
     friend void EmulatorHelper::deregisterEmulator();;
     friend void EmulatorHelper::busWrite(uint16_t address, uint8_t value);
     friend uint8_t EmulatorHelper::busRead(uint16_t address);
+    friend void EmulatorHelper::replaceMemory(uint8_t *newContents, size_t offset, size_t length);
 };

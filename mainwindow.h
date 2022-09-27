@@ -34,6 +34,14 @@ public:
     void updateDockTitleControls(bool isFloating);
 
     /**
+     * Compiles and loads the current file into memory at 0x5F00, sets the reset vector to that address, and resets the emulator
+     *
+     * TODO: Move the positioning in memory to an external script and call that
+     * TODO: Allow custom memory maps
+     */
+    void compileAndLoad();
+
+    /**
      * Handles the open action click
      */
     void handleMenuOpen();
@@ -97,6 +105,12 @@ public:
     void setUpEditor(QTextEdit *&editor);
 
     /**
+     * Resets the emulator
+     *
+     */
+    void resetEmulator();
+
+    /**
      * The main window title
      */
     const std::string kWindowTitle = "6502 Emulator";
@@ -109,18 +123,21 @@ private:
     QTableWidget *register_table = nullptr;
     QPushButton *step_button = nullptr;
     QTextEdit *editor = nullptr;
+    QPushButton *build_button = nullptr;
 
     QDockWidget *register_tab = nullptr;
     QDockWidget *memory_tab = nullptr;
     QDockWidget *emulator_controls_tab = nullptr;
 
     QMenu *fileMenu = nullptr;
+    QMenu *buildMenu = nullptr;
 
     QAction *saveAction = nullptr;
     QAction *saveAsAction = nullptr;
     QAction *newAction = nullptr;
     QAction *openAction = nullptr;
     QAction *closeAction = nullptr;
+    QAction *buildAction = nullptr;
 
     QToolBar *toolBar = nullptr;
     QComboBox *fileDropdown = nullptr;

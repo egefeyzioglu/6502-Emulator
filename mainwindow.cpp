@@ -9,6 +9,7 @@
 #include <QFontDialog>
 #include <QShortcut>
 #include <QMessageBox>
+#include <QProcess>
 
 #include <fstream>
 #include <algorithm>
@@ -18,6 +19,8 @@
 #include "./ui_mainwindow.h"
 #include "emulator.h"
 #include "memorymodel.h"
+
+#include "log.h"
 
 #define CEIL_DIVIDE_INT(x, y) x / y + (x % y > 0)
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
@@ -59,8 +62,10 @@ void MainWindow::setUpMemoryTable(QTableView *&memory_view){
  * @param register_table
  */
 void MainWindow::updateRegisterTable(QTableWidget *&register_table){
-    delete register_table; // Deleting nullptr is safe
-    register_table = new QTableWidget(6, 1);
+    if(register_table == nullptr)
+        register_table = new QTableWidget(6, 1);
+
+    register_table -> clear();
 
     // Set up titles
 
@@ -180,7 +185,7 @@ void MainWindow::handleMenuOpen(){
 
         // Break down the path to the file name and directory
         auto newFilePathObj = std::filesystem::path(fileNames[0] . toStdString());
-        std::string newFileName = newFilePathObj.stem().u8string();
+        std::string newFileName = newFilePathObj.filename().u8string();
         std::string newFilePath = newFilePathObj.parent_path().u8string();
 
         // Populate the LoadedFile object and insert it into the loadedFiles vector
@@ -327,6 +332,55 @@ void MainWindow::updateOpenFile(int selectedFileIndex){
 
 void MainWindow::emulatorStep(){
     emulator->step();
+    updateRegisterTable(register_table);
+}
+
+void MainWindow::compileAndLoad(){
+    Log::Debug() << "Compile and load";
+
+    // Compile/assmeble
+
+    QString dasmPath = "C:\\Program Files\\dasm\\dasm.exe";
+    QStringList dasmArgs;
+
+    LoadedFile currentFile = loadedFiles -> at(fileDropdown->currentIndex());
+
+    std::string outFileName = currentFile.fullPath.substr(0, currentFile.fullPath.find_last_of(".")) + ".tmp";
+
+    dasmArgs << QString::fromUtf8(currentFile.fullPath);
+    dasmArgs << "-v5" << "-f3" << QString::fromUtf8("-o" + outFileName);
+
+    Log::Debug() << dasmArgs;
+
+    QProcess *compilerProcess = new QProcess();
+    compilerProcess -> start(dasmPath, dasmArgs);
+    if(!compilerProcess->waitForFinished()){
+        Log::Warning() << "Timed out waiting for assembler";
+    }
+    Log::Debug() << compilerProcess -> readAll().replace("\\n", "\n").replace("\\r","\r");
+
+    // Load
+
+    // Creat ifstream and buffer to read into and read file
+    std::ifstream outputFileInputStream(outFileName, std::ios::binary);
+    char inBuf[emulator -> kMemorySize];
+    if(!outputFileInputStream.read(inBuf, emulator -> kMemorySize) && !outputFileInputStream.eof()){
+        Log::Warning() << "Could not read assembly output file when loading. rdstate = " << outputFileInputStream.rdstate();
+        Log::Warning() << "eofbit = " << std::ifstream::eofbit << ", failbit = " << std::ifstream::failbit << ", badbit = " << std::ifstream::badbit << ", goodbit = " << std::ifstream::goodbit;
+    }else{
+        EmulatorHelper::replaceMemory((uint8_t*) inBuf, emulator -> kProgMemOffset, outputFileInputStream.gcount());
+    }
+    // Load reset vector
+    emulator -> setMemoryValue(0xFFFD, 0x5F);
+    emulator -> setMemoryValue(0xFFFC, 0x00);
+    this -> resetEmulator();
+    // Update memory view
+    memory_model -> updateData();
+}
+
+void MainWindow::resetEmulator(){
+    emulator -> resetCPU();
+    updateRegisterTable(register_table);
 }
 
 void MainWindow::setUpEditor(QTextEdit *&editor){
@@ -381,13 +435,17 @@ MainWindow::MainWindow(QWidget *parent)
     saveAsAction = new QAction("Save As");
     closeAction = new QAction("Close");
 
+    buildAction = new QAction(tr("&Build"));
+
     newAction -> setShortcut(Qt::CTRL | Qt::Key_N);
     openAction -> setShortcut(Qt::CTRL | Qt::Key_O);
     saveAction -> setShortcut(Qt::CTRL | Qt::Key_S);
     saveAsAction -> setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_S);
     closeAction -> setShortcut(Qt::CTRL | Qt::Key_W);
+    buildAction -> setShortcut(Qt::Key_F5);
 
-    fileMenu = menuBar()->addMenu(tr("&File"));
+    fileMenu = menuBar() -> addMenu(tr("&File"));
+    buildMenu = menuBar() -> addMenu(tr("&Build"));
 
     fileMenu->addAction(newAction);
     fileMenu->addAction(openAction);
@@ -395,11 +453,15 @@ MainWindow::MainWindow(QWidget *parent)
     fileMenu->addAction(saveAsAction);
     fileMenu->addAction(closeAction);
 
+    buildMenu -> addAction(buildAction);
+
     connect(newAction, &QAction::triggered, this, &MainWindow::handleMenuNew);
     connect(openAction, &QAction::triggered, this, &MainWindow::handleMenuOpen);
     connect(saveAsAction, &QAction::triggered, this, &MainWindow::handleMenuSaveAs);
     connect(saveAction, &QAction::triggered, this, &MainWindow::handleMenuSave);
     connect(closeAction, &QAction::triggered, this, &MainWindow::handleMenuClose);
+
+    connect(buildAction, &QAction::triggered, this, &MainWindow::compileAndLoad);
 
     // Toolbar
     toolBar = new QToolBar();
