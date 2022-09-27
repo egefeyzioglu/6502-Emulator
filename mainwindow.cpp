@@ -45,6 +45,8 @@ extern Emulator *emulator;
  * @param memory_table
  */
 void MainWindow::setUpMemoryTable(QTableView *&memory_view){
+    constexpr int kMinimumHorizontalSize = 30;
+
     memory_view = new QTableView();
     memory_model = new MemoryModel(emulator->kMemorySize, emulator, this);
     memory_view -> setModel(memory_model);
@@ -52,6 +54,9 @@ void MainWindow::setUpMemoryTable(QTableView *&memory_view){
     memory_view -> setCornerButtonEnabled(false);
     memory_view -> setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectItems);
     memory_view -> setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
+    memory_view -> horizontalHeader() -> setMinimumSectionSize(kMinimumHorizontalSize);
+    memory_view -> resizeColumnsToContents();
+    memory_view -> resizeRowsToContents();
 }
 
 /**
