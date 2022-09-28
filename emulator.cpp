@@ -10,7 +10,7 @@
 Emulator::Emulator(){
     // Allocate memory
     this -> memory = new uint8_t[Emulator::kMemorySize];
-    memset(this -> memory, 0, Emulator::kMemorySize);
+    memset(this -> memory, 0xff, Emulator::kMemorySize);
 
     // Register to the helper functions
     EmulatorHelper::registerEmulator(this);
