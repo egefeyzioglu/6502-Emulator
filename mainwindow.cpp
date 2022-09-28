@@ -468,9 +468,10 @@ void MainWindow::loadFile(std::string newFilePath){
     editorTitle -> setText(newFileObj.fileName);
 }
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , kWindowTitle(kWindowTitle)
 {
     this -> setWindowTitle(kWindowTitle.data());
     this -> setWindowIcon(QIcon(":/resources/img/icon.xpm"));

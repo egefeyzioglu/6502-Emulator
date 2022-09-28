@@ -24,7 +24,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(std::string kWindowTitle, QWidget *parent = nullptr);
     ~MainWindow();
 
     /**
@@ -137,7 +137,7 @@ public:
     /**
      * The main window title
      */
-    const std::string kWindowTitle = "6502 Emulator";
+    const std::string kWindowTitle;
 
     /**
      * The default size of the build log
