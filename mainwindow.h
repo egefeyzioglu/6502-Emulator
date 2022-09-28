@@ -8,6 +8,7 @@
 #include <QFileDialog>
 #include <QToolBar>
 #include <QComboBox>
+#include <QLabel>
 
 #include "loadedfile.h"
 #include "syntaxhighlighter.h"
@@ -102,7 +103,7 @@ public:
      *
      * @param editor
      */
-    void setUpEditor(QTextEdit *&editor);
+    void setUpEditor(QWidget *&editorContainer, QTextEdit *&editor, QLabel *&editorTitle);
 
     /**
      * Resets the emulator
@@ -122,7 +123,11 @@ private:
     MemoryModel *memory_model;
     QTableWidget *register_table = nullptr;
     QPushButton *step_button = nullptr;
+
     QTextEdit *editor = nullptr;
+    QWidget *editorContainer = nullptr;
+    QLabel *editorTitle = nullptr;
+
     QPushButton *build_button = nullptr;
 
     QDockWidget *register_tab = nullptr;

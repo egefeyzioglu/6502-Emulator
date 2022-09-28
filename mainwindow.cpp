@@ -207,6 +207,9 @@ void MainWindow::handleMenuOpen(){
         // Update the editor
         editor -> setPlainText(QString::fromUtf8(contents.data(), contents.length()));
         editor -> setDocumentTitle(fileNames[0]);
+
+        // Update the editor title
+        editorTitle -> setText(newFileObj.fileName);
     }
 }
 
@@ -239,6 +242,9 @@ void MainWindow::handleMenuNew(){
     // Trigger text change (since that doesn't happen automatically for some reason?)
     this -> updateOpenFileContents();
 
+    // Update the editor title
+    editorTitle -> setText(newFileObj.fileName);
+
 }
 
 void MainWindow::handleMenuSaveAs(){
@@ -261,13 +267,16 @@ void MainWindow::handleMenuSaveAs(){
         // Get the current LoadedFile object from loadedFiles and update it
         LoadedFile &file = loadedFiles -> at(fileDropdown ->currentIndex());
         auto newFilePathObj = std::filesystem::path(fileNames[0] . toStdString());
-        std::string newFileName = newFilePathObj.stem().u8string();
+        std::string newFileName = newFilePathObj.filename().u8string();
         file.fileName = QString::fromStdString(newFileName);
         file.fullPath = fileNames[0].toStdString();
         file.savedSinceLastEdit = true;
 
         // Update the fileDropdown item
         fileDropdown -> setItemText(fileDropdown ->currentIndex(), fileNames[0]);
+
+        // Update the editor title
+        editorTitle -> setText(file.fileName);
 
     }
 }
@@ -297,6 +306,9 @@ void MainWindow::handleMenuClose(){
 
         // If we ran out of files, create a new one
         if(loadedFiles->size() == 0) handleMenuNew();
+
+        // Update the editor title
+        editorTitle -> setText(loadedFiles -> at(fileDropdown -> currentIndex()).fileName);
     }else{ // If it hasn't been saved, ask if the user wants to
         // Create a message box
         QMessageBox confirm;
@@ -382,9 +394,19 @@ void MainWindow::resetEmulator(){
     updateRegisterTable(register_table);
 }
 
-void MainWindow::setUpEditor(QTextEdit *&editor){
-    // Create editor
+void MainWindow::setUpEditor(QWidget *&editorContainer, QTextEdit *&editor, QLabel *&editorTitle){
+    // Create the editor container, its layout, the editor, and editor title
+    editorContainer = new QWidget();
+    editorTitle = new QLabel();
     editor = new QTextEdit();
+    QVBoxLayout *editorContainerLayout = new QVBoxLayout();
+
+    // Add the widgets to the container layout
+    editorContainerLayout -> addWidget(editorTitle);
+    editorContainerLayout -> addWidget(editor);
+
+    // Apply the layout to the container
+    editorContainer -> setLayout(editorContainerLayout);
 
     // Create syntax highlighter, apply to the editor's document
     syntaxHighlighter = new SyntaxHighlighter(editor -> document());
@@ -407,7 +429,8 @@ MainWindow::MainWindow(QWidget *parent)
     // Set up the base widgets
     setUpMemoryTable(memory_view);
     updateRegisterTable(register_table);
-    setUpEditor(editor);
+    QVBoxLayout *editorContainerLayout;
+    setUpEditor(editorContainer, editor, editorTitle);
 
     step_button = new QPushButton("Step");
 
@@ -477,7 +500,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(step_button, &QPushButton::clicked, this, &MainWindow::emulatorStep);
 
     // Add everything to the window
-    this -> setCentralWidget(editor);
+    this -> setCentralWidget(editorContainer);
     this -> addDockWidget(Qt::LeftDockWidgetArea, memory_tab);
     this -> addDockWidget(Qt::RightDockWidgetArea, register_tab);
     this -> addDockWidget(Qt::RightDockWidgetArea, emulator_controls_tab);
@@ -495,6 +518,7 @@ MainWindow::~MainWindow() {
     delete register_table;
     delete step_button;
     delete editor;
+    delete editorContainer;
 
     delete memory_tab;
     delete register_tab;
