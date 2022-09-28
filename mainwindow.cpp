@@ -118,11 +118,17 @@ void MainWindow::updateRegisterTable(QTableWidget *&register_table){
     QTableWidgetItem *reg_SP_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetS()), emulator->get6502()->GetS()));
     register_table -> setItem(3,0, reg_SP_value);
     // Register PC
-    QTableWidgetItem *reg_PC_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetPC()), emulator->get6502()->GetPC()));
+    QTableWidgetItem *reg_PC_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c (0x%04x)" ,
+                                                                            BYTE_TO_BINARY(emulator->get6502()->GetPC() % 0xFF00),
+                                                                            BYTE_TO_BINARY(emulator->get6502()->GetPC() % 0x00FF),
+                                                                            emulator->get6502()->GetPC()));
     register_table -> setItem(4,0, reg_PC_value);
     // Register status
     QTableWidgetItem *reg_status_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetP()), emulator->get6502()->GetP()));
     register_table -> setItem(5, 0, reg_status_value);
+
+    // Align width to contents (need to fit the program counter)
+    register_table -> resizeColumnsToContents();
 }
 
 /**
