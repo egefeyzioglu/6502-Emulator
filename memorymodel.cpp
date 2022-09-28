@@ -1,6 +1,15 @@
 #include "memorymodel.h"
 
-MemoryModel::MemoryModel(size_t kMemorySize, Emulator *emulator, QObject *parent) : QAbstractTableModel{parent}, kMemorySize{kMemorySize}, emulator{emulator} {}
+#include "log.h"
+
+#include "QColor"
+
+MemoryModel::MemoryModel(size_t kMemorySize, Emulator *emulator, QObject *parent) : QAbstractTableModel{parent}, kMemorySize{kMemorySize}, emulator{emulator} {
+    // When a new instruction is run, clear all previous highlights
+    connect(emulator, &Emulator::instructionRan, this, &MemoryModel::clearHighlight);
+    // We need to update the model whenever the memory changes
+    connect(emulator, &Emulator::memoryChanged, this, &MemoryModel::handleMemoryChanged);
+}
 
 MemoryModel::~MemoryModel(){}
 
@@ -59,6 +68,14 @@ QVariant MemoryModel::data(const QModelIndex &index, int role) const{
         return Qt::AlignCenter;
     }
 
+    // Background brush role
+    if(role == Qt::BackgroundRole){
+        // If the cell was newly changed, highlight the cell by painting the background
+        if(std::find(newlyChangedCells.begin(), newlyChangedCells.end(), index) != newlyChangedCells.end()){
+            return QColor(Qt::yellow);
+        }
+    }
+
     // All other roles
     return QVariant();
 }
@@ -110,4 +127,23 @@ void MemoryModel::updateData(QModelIndex topLeft, QModelIndex bottomRight){
         bottomRight = index(this -> rowCount(), this -> columnCount());
     }
     emit dataChanged(topLeft, bottomRight);
+}
+
+void MemoryModel::handleMemoryChanged(uint16_t address){
+    // Get an index to the cell and ASCII dump that was changed
+    int row = address / 0x10;
+    int column = address % 0x10;
+    QModelIndex cellToUpdate = this -> index(row, column);
+    QModelIndex dumpToUpdate = this -> index(row, this -> columnCount() - 1);
+    // Add cell and ASCII dump to the list of newly changed cells
+    this -> newlyChangedCells.push_back(cellToUpdate);
+    this -> newlyChangedCells.push_back(dumpToUpdate);
+    // Update the cell and dump
+    this -> updateData(cellToUpdate, cellToUpdate);
+    this -> updateData(dumpToUpdate, dumpToUpdate);
+}
+
+void MemoryModel::clearHighlight(){
+    newlyChangedCells.clear();
+    this -> updateData();
 }

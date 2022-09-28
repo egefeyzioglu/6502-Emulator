@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QObject>
+
 #include <vector>
 
 #include "mos6502.h"
@@ -25,8 +27,10 @@ namespace EmulatorHelper{
 }
 
 // The emulator class
-class Emulator{
+class Emulator : public QObject{
+    Q_OBJECT
 public:
+
     Emulator();
     ~Emulator();
 
@@ -44,7 +48,6 @@ public:
     // Reset the CPU
     void resetCPU();
 
-
     //#define lowerMemory
 
     #ifdef lowerMemory
@@ -55,6 +58,10 @@ public:
     constexpr static size_t kMemorySize = 0x10000;
     #endif
     constexpr static size_t kProgMemOffset = 0x5f00;
+
+signals:
+    void memoryChanged(uint16_t address);
+    void instructionRan();
 
 private:
     // The CPU instance

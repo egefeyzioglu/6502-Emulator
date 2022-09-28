@@ -40,15 +40,21 @@ uint8_t Emulator::getMemoryValue(uint16_t address){
     return this -> memory[address];
 }
 
-
+/**
+ * Sets memory address `address` to `value`, then emits `memoryChanged(value)`
+ * @param address
+ * @param value
+ */
 void Emulator::setMemoryValue(uint16_t address, uint8_t value){
     this -> memory[address] = value;
+    emit memoryChanged(address);
 }
 
 void Emulator::step(){
-    uint64_t count = 0;
-    this -> cpu -> Run(1, count);
-    Log::Info() << "Tried to run 1 step, ran " << count << " steps";
+    emit instructionRan();
+    uint64_t cycleCount = 0;
+    this -> cpu -> Run(1, cycleCount);
+    Log::Info() << "Executed one instruction, " << cycleCount << " cycles";
 }
 
 void Emulator::resetCPU(){
@@ -70,14 +76,17 @@ void EmulatorHelper::deregisterEmulator(){
 }
 
 uint8_t EmulatorHelper::busRead(uint16_t address){
-    return emulator -> memory[address];
+    return emulator -> getMemoryValue(address);
 }
 
 
 void EmulatorHelper::busWrite(uint16_t address, uint8_t value){
-    emulator -> memory[address] = value;
+    emulator -> setMemoryValue(address, value);
 }
 
 void EmulatorHelper::replaceMemory(uint8_t *newContents, size_t offset, size_t length){
     memcpy((emulator -> memory) + offset, newContents, length);
+    for(int offsetInNewContents = 0; offsetInNewContents < length; offsetInNewContents++){
+        emulator -> setMemoryValue(offset + offsetInNewContents, newContents[offsetInNewContents]);
+    }
 }
