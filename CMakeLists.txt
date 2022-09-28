@@ -15,6 +15,11 @@ set(CMAKE_PREFIX_PATH "/Qt/6.3.1/mingw_64/lib/cmake")
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    enable_language("RC")
+    set (WIN32_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/windows/icon.rc)
+endif()
+
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
@@ -34,10 +39,12 @@ set(PROJECT_SOURCES
         memorymodel.cpp
 )
 
+
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(6502Emulator
+    qt_add_executable(6502Emulator WIN32
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        ${WIN32_RESOURCES}
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET 6502Emulator APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
