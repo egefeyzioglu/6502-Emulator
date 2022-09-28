@@ -11,6 +11,7 @@
 #include <QLabel>
 
 #include "loadedfile.h"
+#include "qplaintextedit.h"
 #include "syntaxhighlighter.h"
 #include "memorymodel.h"
 
@@ -33,6 +34,7 @@ public:
     void updateDockTitleMemory(bool isFloating);
     void updateDockTitleRegisters(bool isFloating);
     void updateDockTitleControls(bool isFloating);
+    void updateDockTitleBuildLog(bool isFloating);
 
     /**
      * Compiles and loads the current file into memory at 0x5F00, sets the reset vector to that address, and resets the emulator
@@ -112,9 +114,28 @@ public:
     void resetEmulator();
 
     /**
+     * Sets up the build log widget
+     *
+     * @param compilerLog
+     */
+    void setUpBuildLog(QPlainTextEdit *&compilerLog);
+
+    /**
+     * Adds new line or lines to the build log
+     *
+     * @param newContent
+     */
+    void addToBuildLog(QString newContent);
+
+    /**
      * The main window title
      */
     const std::string kWindowTitle = "6502 Emulator";
+
+    /**
+     * The default size of the build log
+     */
+    const int kBuildLogDefaultSize = 130;
 
 private:
     Ui::MainWindow *ui;
@@ -128,11 +149,14 @@ private:
     QWidget *editorContainer = nullptr;
     QLabel *editorTitle = nullptr;
 
+    QPlainTextEdit *buildLog = nullptr;
+
     QPushButton *build_button = nullptr;
 
     QDockWidget *register_tab = nullptr;
     QDockWidget *memory_tab = nullptr;
     QDockWidget *emulator_controls_tab = nullptr;
+    QDockWidget *build_log_tab = nullptr;
 
     QMenu *fileMenu = nullptr;
     QMenu *buildMenu = nullptr;

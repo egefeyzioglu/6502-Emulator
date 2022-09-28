@@ -10,6 +10,7 @@
 #include <QShortcut>
 #include <QMessageBox>
 #include <QProcess>
+#include <QScrollBar>
 
 #include <fstream>
 #include <algorithm>
@@ -161,6 +162,9 @@ void MainWindow::updateDockTitleRegisters(bool isFloating){
 }
 void MainWindow::updateDockTitleControls(bool isFloating){
     updateDockTitle(emulator_controls_tab, isFloating);
+}
+void MainWindow::updateDockTitleBuildLog(bool isFloating){
+    updateDockTitle(build_log_tab, isFloating);
 }
 
 // Menu slots
@@ -352,6 +356,12 @@ void MainWindow::emulatorStep(){
     updateRegisterTable(register_table);
 }
 
+void MainWindow::addToBuildLog(QString newContent){
+
+    buildLog -> setPlainText(buildLog -> toPlainText() + "\n" + newContent);
+    buildLog -> verticalScrollBar() -> setValue(buildLog -> verticalScrollBar() -> maximum());
+}
+
 void MainWindow::compileAndLoad(){
     Log::Info() << "Compiling and loading current file";
 
@@ -372,6 +382,9 @@ void MainWindow::compileAndLoad(){
     if(!compilerProcess->waitForFinished()){
         Log::Warning() << "Timed out waiting for assembler";
     }
+
+    QByteArray compilerOutput = compilerProcess -> readAll();
+    addToBuildLog(QString::fromUtf8(compilerOutput.toStdString()));
 
     // Load
 
@@ -418,6 +431,11 @@ void MainWindow::setUpEditor(QWidget *&editorContainer, QTextEdit *&editor, QLab
 
 }
 
+void MainWindow::setUpBuildLog(QPlainTextEdit *&compilerLog){
+    compilerLog = new QPlainTextEdit();
+    compilerLog -> setTextInteractionFlags(Qt::TextBrowserInteraction | Qt::TextSelectableByKeyboard);
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -431,6 +449,7 @@ MainWindow::MainWindow(QWidget *parent)
     updateRegisterTable(register_table);
     QVBoxLayout *editorContainerLayout;
     setUpEditor(editorContainer, editor, editorTitle);
+    setUpBuildLog(buildLog);
 
     step_button = new QPushButton("Step");
 
@@ -438,16 +457,19 @@ MainWindow::MainWindow(QWidget *parent)
     register_tab = new QDockWidget("Registers");
     memory_tab = new QDockWidget("Memory");
     emulator_controls_tab = new QDockWidget("Controls");
+    build_log_tab = new QDockWidget("Build Log");
 
     emulator_controls_tab -> setWidget(step_button);
     memory_tab -> setWidget(memory_view);
     register_tab -> setWidget(register_table);
+    build_log_tab -> setWidget(buildLog);
 
 
     // Dock widget title updates
     connect(memory_tab, &QDockWidget::topLevelChanged, this, &MainWindow::updateDockTitleMemory);
     connect(register_tab, &QDockWidget::topLevelChanged, this, &MainWindow::updateDockTitleRegisters);
     connect(emulator_controls_tab, &QDockWidget::topLevelChanged, this, &MainWindow::updateDockTitleControls);
+    connect(build_log_tab, &QDockWidget::topLevelChanged, this, &MainWindow::updateDockTitleBuildLog);
 
     // Set up menus
 
@@ -504,7 +526,11 @@ MainWindow::MainWindow(QWidget *parent)
     this -> addDockWidget(Qt::LeftDockWidgetArea, memory_tab);
     this -> addDockWidget(Qt::RightDockWidgetArea, register_tab);
     this -> addDockWidget(Qt::RightDockWidgetArea, emulator_controls_tab);
+    this -> addDockWidget(Qt::BottomDockWidgetArea, build_log_tab);
     this -> addToolBar(toolBar);
+
+    // Set the size for the build log tab
+    this -> resizeDocks({build_log_tab}, {kBuildLogDefaultSize}, Qt::Vertical);
 
     this -> show();
 
@@ -517,12 +543,16 @@ MainWindow::~MainWindow() {
     delete memory_model;
     delete register_table;
     delete step_button;
+
     delete editor;
     delete editorContainer;
+
+    delete buildLog;
 
     delete memory_tab;
     delete register_tab;
     delete emulator_controls_tab;
+    delete build_log_tab;
 
     delete saveAction;
     delete saveAsAction;
