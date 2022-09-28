@@ -341,7 +341,7 @@ void MainWindow::emulatorStep(){
 }
 
 void MainWindow::compileAndLoad(){
-    Log::Debug() << "Compile and load";
+    Log::Info() << "Compiling and loading current file";
 
     // Compile/assmeble
 
@@ -355,14 +355,11 @@ void MainWindow::compileAndLoad(){
     dasmArgs << QString::fromUtf8(currentFile.fullPath);
     dasmArgs << "-v5" << "-f3" << QString::fromUtf8("-o" + outFileName);
 
-    Log::Debug() << dasmArgs;
-
     QProcess *compilerProcess = new QProcess();
     compilerProcess -> start(dasmPath, dasmArgs);
     if(!compilerProcess->waitForFinished()){
         Log::Warning() << "Timed out waiting for assembler";
     }
-    Log::Debug() << compilerProcess -> readAll().replace("\\n", "\n").replace("\\r","\r");
 
     // Load
 
