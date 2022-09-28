@@ -225,6 +225,7 @@ void MainWindow::handleMenuSaveAs(){
     openDialog = new QFileDialog(this);
     openDialog -> setNameFilter(tr("Assembly Files (*.s);;C Source Files (*.c);;C Header Files (*.h);;Any File(*)"));
     openDialog -> setViewMode(QFileDialog::Detail);
+    openDialog -> setAcceptMode(QFileDialog::AcceptSave);
     QStringList fileNames;
     if (openDialog -> exec()){ // If the user picks a file
         fileNames = openDialog -> selectedFiles();
