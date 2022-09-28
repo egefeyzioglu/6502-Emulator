@@ -363,6 +363,29 @@ void MainWindow::addToBuildLog(QString newContent){
 }
 
 void MainWindow::compileAndLoad(){
+    // Check if we saved this file, prompt to save if not
+    if(!loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit){
+        // Create a message box
+        QMessageBox confirm;
+        confirm.setText("Save file " + loadedFiles -> at(fileDropdown -> currentIndex()).fileName + "?");
+        confirm.setIcon(QMessageBox::Question);
+        confirm.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
+        confirm.setDefaultButton(QMessageBox::Save);
+        // Ask to confirm
+        int answer = confirm.exec();
+        switch(answer){
+        case QMessageBox::Save:
+            // If the user wants to save, save
+            handleMenuSave();
+            // Then call this function again (If the file was saved we won't get here)
+            compileAndLoad();
+            return;
+        case QMessageBox::Cancel:
+            // If the user doesn't, cancel
+            return;
+        }
+    }
+
     Log::Info() << "Compiling and loading current file";
 
     // Compile/assmeble
