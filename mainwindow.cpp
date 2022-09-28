@@ -546,20 +546,26 @@ MainWindow::~MainWindow() {
 
     delete editor;
     delete editorContainer;
+    delete editorTitle;
 
     delete buildLog;
+
+    delete build_button;
 
     delete memory_tab;
     delete register_tab;
     delete emulator_controls_tab;
     delete build_log_tab;
 
+    delete fileMenu;
+    delete buildMenu;
+
     delete saveAction;
     delete saveAsAction;
     delete newAction;
     delete openAction;
     delete closeAction;
-    delete fileMenu;
+    delete buildAction;
 
     delete toolBar;
     delete fileDropdown;
@@ -570,7 +576,6 @@ MainWindow::~MainWindow() {
     delete openDialog;
 
     delete syntaxHighlighter;
-
 
     delete ui;
 }
