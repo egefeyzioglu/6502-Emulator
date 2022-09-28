@@ -372,9 +372,6 @@ void MainWindow::compileAndLoad(){
     }else{
         EmulatorHelper::replaceMemory((uint8_t*) inBuf, emulator -> kProgMemOffset, outputFileInputStream.gcount());
     }
-    // Load reset vector
-    emulator -> setMemoryValue(0xFFFD, 0x5F);
-    emulator -> setMemoryValue(0xFFFC, 0x00);
     this -> resetEmulator();
     // Update memory view
     memory_model -> updateData();
