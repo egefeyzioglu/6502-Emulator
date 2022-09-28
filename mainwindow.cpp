@@ -181,44 +181,8 @@ void MainWindow::handleMenuOpen(){
     openDialog -> setViewMode(QFileDialog::Detail);
     QStringList fileNames;
     if (openDialog -> exec()){ // If the user picked a file,
-        fileNames = openDialog -> selectedFiles();
-
-        // Open and read the file into contents
-        std::string contents;
-        std::string line;
-
-        std::ifstream newFile;
-        newFile.open(fileNames[0].toStdString(), ios::in);
-
-        while(getline(newFile, line)){
-            contents += line + "\n";
-        }
-
-        // Create a new LoadedFile object to be inserted into loadedFiles
-        LoadedFile newFileObj;
-
-        // Break down the path to the file name and directory
-        auto newFilePathObj = std::filesystem::path(fileNames[0] . toStdString());
-        std::string newFileName = newFilePathObj.filename().u8string();
-        std::string newFilePath = newFilePathObj.parent_path().u8string();
-
-        // Populate the LoadedFile object and insert it into the loadedFiles vector
-        newFileObj.fileName = QString::fromStdString(newFileName);
-        newFileObj.fullPath = newFilePath + SLASH + newFileName;
-        newFileObj.contents = QString::fromStdString(contents);
-        newFileObj.savedSinceLastEdit = false;
-        loadedFiles -> push_back(newFileObj);
-
-        // Add the file as an option to fileDropdown
-        fileDropdown -> addItem(fileNames[0]);
-        fileDropdown -> setCurrentIndex(fileDropdown -> count() - 1);
-
-        // Update the editor
-        editor -> setPlainText(QString::fromUtf8(contents.data(), contents.length()));
-        editor -> setDocumentTitle(fileNames[0]);
-
-        // Update the editor title
-        editorTitle -> setText(newFileObj.fileName);
+        // Load the file
+        loadFile(openDialog -> selectedFiles()[0].toStdString());
     }
 }
 
@@ -462,6 +426,46 @@ void MainWindow::setUpEditor(QWidget *&editorContainer, QTextEdit *&editor, QLab
 void MainWindow::setUpBuildLog(QPlainTextEdit *&compilerLog){
     compilerLog = new QPlainTextEdit();
     compilerLog -> setTextInteractionFlags(Qt::TextBrowserInteraction | Qt::TextSelectableByKeyboard);
+}
+
+
+void MainWindow::loadFile(std::string newFilePath){
+    // Open and read the file into contents
+    std::string contents;
+    std::string line;
+
+    std::ifstream newFile;
+    newFile.open(newFilePath, ios::in);
+
+    while(getline(newFile, line)){
+        contents += line + "\n";
+    }
+
+    // Create a new LoadedFile object to be inserted into loadedFiles
+    LoadedFile newFileObj;
+
+    // Break down the path to the file name and directory
+    auto newFilePathObj = std::filesystem::path(newFilePath);
+    std::string newFileName = newFilePathObj.filename().u8string();
+    std::string newFileDirectory = newFilePathObj.parent_path().u8string();
+
+    // Populate the LoadedFile object and insert it into the loadedFiles vector
+    newFileObj.fileName = QString::fromStdString(newFileName);
+    newFileObj.fullPath = newFileDirectory + SLASH + newFileName;
+    newFileObj.contents = QString::fromStdString(contents);
+    newFileObj.savedSinceLastEdit = false;
+    loadedFiles -> push_back(newFileObj);
+
+    // Add the file as an option to fileDropdown
+    fileDropdown -> addItem(QString::fromStdString(newFilePath));
+    fileDropdown -> setCurrentIndex(fileDropdown -> count() - 1);
+
+    // Update the editor
+    editor -> setPlainText(QString::fromUtf8(contents.data(), contents.length()));
+    editor -> setDocumentTitle(QString::fromStdString(newFilePath));
+
+    // Update the editor title
+    editorTitle -> setText(newFileObj.fileName);
 }
 
 MainWindow::MainWindow(QWidget *parent)

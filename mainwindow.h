@@ -128,6 +128,13 @@ public:
     void addToBuildLog(QString newContent);
 
     /**
+     * Load a new file at specified path
+     *
+     * @param newFilePath
+     */
+    void loadFile(std::string newFilePath);
+
+    /**
      * The main window title
      */
     const std::string kWindowTitle = "6502 Emulator";
