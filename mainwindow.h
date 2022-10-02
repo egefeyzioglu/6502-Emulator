@@ -108,6 +108,14 @@ public:
     void setUpEditor(QWidget *&editorContainer, QTextEdit *&editor, QLabel *&editorTitle);
 
     /**
+     * Sets up the emulator controls
+     *
+     * @param emulatorControlsWrapper
+     * @return
+     */
+    void setUpEmulatorControls(QWidget *&emulatorControlsWrapper);
+
+    /**
      * Resets the emulator
      *
      */
@@ -141,6 +149,28 @@ public:
     void handleRegistersChanged(std::vector<Emulator::Register> registers_to_update);
 
     /**
+     * Updates the real clock rate display
+     */
+    void updateRealClockRate();
+
+    /**
+     * Formats the clock speed with the correct SI prefix and returns as QString
+     * @param clockSpeed
+     * @return The formatted clock speed
+     */
+    QString clockSpeedDoubleToString(double clockSpeed);
+
+    /**
+     * Updates the emulator clock rate from the input field
+     */
+    void updateClockRate();
+
+    /**
+     * Interrupt the emulator
+     */
+    void interruptEmulator();
+
+    /**
      * The main window title
      */
     const std::string kWindowTitle;
@@ -150,13 +180,27 @@ public:
      */
     const int kBuildLogDefaultSize = 130;
 
+    /**
+     * How often the real clock speed display is updated
+     */
+    const int kClockSpeedRefreshMillis = 500;
+
 private:
     Ui::MainWindow *ui;
 
     QTableView *memory_view;
     MemoryModel *memory_model;
     QTableWidget *register_table = nullptr;
+
     QPushButton *step_button = nullptr;
+    QPushButton *run_button = nullptr;
+    QPushButton *interrupt_button = nullptr;
+    QLabel *clock_speed_label = nullptr;
+    QLineEdit *clock_speed_value = nullptr;
+    QLabel *real_clock_speed_label = nullptr;
+    QLabel *real_clock_speed_value = nullptr;
+    QWidget *emulatorControlsWrapper = nullptr;
+
 
     QTextEdit *editor = nullptr;
     QWidget *editorContainer = nullptr;
@@ -190,5 +234,14 @@ private:
     QFileDialog *openDialog = nullptr;
 
     SyntaxHighlighter *syntaxHighlighter = nullptr;
+
+    /**
+     * Converts the given string in expressing clock frequency into a double.
+     * Is able to understand "Hz", "daHz", "kHz", "MHz", and just a number (interpreted as Hertz.)
+     *
+     * @param clockSpeedString
+     * @return
+     */
+    double parseClockSpeedString(std::string clockSpeedString);
 };
 #endif // MAINWINDOW_H

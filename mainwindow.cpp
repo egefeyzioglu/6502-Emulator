@@ -11,6 +11,9 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QScrollBar>
+#include <QSpinBox>
+#include <QTimer>
+#include <QLineEdit>
 
 #include <fstream>
 #include <algorithm>
@@ -380,6 +383,10 @@ void MainWindow::addToBuildLog(QString newContent){
     buildLog -> verticalScrollBar() -> setValue(buildLog -> verticalScrollBar() -> maximum());
 }
 
+void MainWindow::interruptEmulator(){
+    emulator -> interrupt();
+}
+
 void MainWindow::compileAndLoad(){
     // Check if we saved this file, prompt to save if not
     if(!loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit){
@@ -477,6 +484,74 @@ void MainWindow::setUpBuildLog(QPlainTextEdit *&compilerLog){
     compilerLog -> setTextInteractionFlags(Qt::TextBrowserInteraction | Qt::TextSelectableByKeyboard);
 }
 
+void MainWindow::setUpEmulatorControls(QWidget *&emulatorControlsWrapper){
+    // Emulator controls
+    step_button = new QPushButton(tr("Step"));
+    run_button = new QPushButton(tr("Run"));
+    interrupt_button = new QPushButton(tr("Interrupt"));
+    clock_speed_label = new QLabel(tr("Target Clock Speed"));
+    clock_speed_value = new QLineEdit();
+    real_clock_speed_label = new QLabel(tr("Actual Clock Speed"));
+    real_clock_speed_value = new QLabel(tr("Stopped"));
+
+    QGridLayout *emulatorControlsLayout = new QGridLayout();
+    emulatorControlsWrapper = new QWidget();
+
+    emulatorControlsLayout -> addWidget(step_button, 0, 0, 1, 1);
+    emulatorControlsLayout -> addWidget(run_button, 0, 1, 1, 1);
+    emulatorControlsLayout -> addWidget(interrupt_button, 0, 2, 1, 1);
+    emulatorControlsLayout -> addWidget(clock_speed_label, 1, 0, 1, 1);
+    emulatorControlsLayout -> addWidget(clock_speed_value, 1, 1, 1, 2);
+    emulatorControlsLayout -> addWidget(real_clock_speed_label, 2, 0, 1, 1);
+    emulatorControlsLayout -> addWidget(real_clock_speed_value, 2, 1, 1, 2);
+
+    emulatorControlsWrapper -> setLayout(emulatorControlsLayout);
+
+    clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> clockSpeed));
+
+    QTimer *clockSpeedRefreshTimer = new QTimer(this);
+    connect(clockSpeedRefreshTimer, &QTimer::timeout, this, &MainWindow::updateRealClockRate);
+    clockSpeedRefreshTimer -> start(kClockSpeedRefreshMillis);
+
+    connect(clock_speed_value, &QLineEdit::editingFinished, this, &MainWindow::updateClockRate);
+    connect(step_button, &QPushButton::clicked, this, &MainWindow::emulatorStep);
+    connect(run_button, &QPushButton::clicked, emulator, &Emulator::run);
+    connect(interrupt_button, &QPushButton::clicked, this, &MainWindow::interruptEmulator);
+}
+
+double MainWindow::parseClockSpeedString(std::string clockSpeedString){
+    // The offset of the unit in the string
+    std::string::size_type unitOffset;
+    // Strip any spaces
+    remove(clockSpeedString.begin(), clockSpeedString.end(), ' ');
+    // Grab the number
+    double coefficient = std::stod(clockSpeedString, &unitOffset);
+    // Grab the unit
+    std::string unit = clockSpeedString.substr(unitOffset, clockSpeedString.length() - unitOffset - 1);
+    // Interpret the unit
+    if(unit == "Hz" || unit == ""){ // Base
+        return coefficient;
+    }
+    if(unit.length() != 3 && unit.length() != 4) return -1; // Invalid format
+    // Grab prefix
+    char prefix = unit[0];
+    // Scale number accordingly and return
+    switch(prefix){
+    case 'd':
+        if(unit[2] == 'a') return 10 * coefficient;
+        else return -1;
+    case 'h':
+        return 100 * coefficient;
+    case 'k':
+        return 1e3 * coefficient;
+    case 'M':
+        return 1e6 * coefficient;
+    case 'G':
+        return 1e9 * coefficient;
+    default:
+        return -1;
+    }
+}
 
 void MainWindow::loadFile(std::string newFilePath){
     // Open and read the file into contents
@@ -517,6 +592,37 @@ void MainWindow::loadFile(std::string newFilePath){
     editorTitle -> setText(newFileObj.fileName);
 }
 
+QString MainWindow::clockSpeedDoubleToString(double clockSpeed){
+    // If clock speed is 0, return "Stopped" instead
+    if(clockSpeed == 0) return "Stopped";
+    // Get the order of magnitude and add the unit with the according SI prefix
+    int orderOfMagnitude = log10(clockSpeed);
+    switch (orderOfMagnitude){
+    case 0:
+    case 1:
+    case 2:
+        return QString::number(clockSpeed) + " Hz";
+    case 3:
+    case 4:
+    case 5:
+        return QString::number(clockSpeed/1e3) + " kHz";
+    default:
+        return QString::number(clockSpeed/1e6) + " MHz";
+    }
+}
+
+void MainWindow::updateRealClockRate(){
+    real_clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> realClockSpeed));
+}
+
+void MainWindow::updateClockRate(){
+    double clockRate = parseClockSpeedString(clock_speed_value -> text().toStdString());
+    if(clockRate != -1){
+        emulator -> clockSpeed = clockRate;
+    }
+    clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> clockSpeed));
+}
+
 MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -532,8 +638,8 @@ MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
     QVBoxLayout *editorContainerLayout;
     setUpEditor(editorContainer, editor, editorTitle);
     setUpBuildLog(buildLog);
+    setUpEmulatorControls(emulatorControlsWrapper);
 
-    step_button = new QPushButton("Step");
 
     // Set up the dock widgets
     register_tab = new QDockWidget("Registers");
@@ -541,11 +647,10 @@ MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
     emulator_controls_tab = new QDockWidget("Controls");
     build_log_tab = new QDockWidget("Build Log");
 
-    emulator_controls_tab -> setWidget(step_button);
+    emulator_controls_tab -> setWidget(emulatorControlsWrapper);
     memory_tab -> setWidget(memory_view);
     register_tab -> setWidget(register_table);
     build_log_tab -> setWidget(buildLog);
-
 
     // Dock widget title updates
     connect(memory_tab, &QDockWidget::topLevelChanged, this, &MainWindow::updateDockTitleMemory);
@@ -599,10 +704,6 @@ MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
 
     connect(fileDropdown, &QComboBox::currentIndexChanged, this, &MainWindow::updateOpenFile);
 
-
-    // Emulator controls
-    connect(step_button, &QPushButton::clicked, this, &MainWindow::emulatorStep);
-
     // Add everything to the window
     this -> setCentralWidget(editorContainer);
     this -> addDockWidget(Qt::LeftDockWidgetArea, memory_tab);
@@ -625,6 +726,14 @@ MainWindow::~MainWindow() {
     delete memory_model;
     delete register_table;
     delete step_button;
+
+    delete run_button;
+    delete interrupt_button;
+    delete clock_speed_label;
+    delete clock_speed_value;
+    delete real_clock_speed_label;
+    delete real_clock_speed_value;
+    delete emulatorControlsWrapper;
 
     delete editor;
     delete editorContainer;
