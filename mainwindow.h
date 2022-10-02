@@ -135,6 +135,12 @@ public:
     void loadFile(std::string newFilePath);
 
     /**
+     * Highlight register display to show that the register changed
+     * @param reg the register
+     */
+    void handleRegistersChanged(std::vector<Emulator::Register> registers_to_update);
+
+    /**
      * The main window title
      */
     const std::string kWindowTitle;

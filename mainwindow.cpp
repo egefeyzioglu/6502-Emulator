@@ -67,65 +67,85 @@ void MainWindow::setUpMemoryTable(QTableView *&memory_view){
  * @param register_table
  */
 void MainWindow::updateRegisterTable(QTableWidget *&register_table){
-    if(register_table == nullptr)
+
+    QString reg_A_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetA()), emulator->get6502()->GetA());
+    QString reg_X_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetX()), emulator->get6502()->GetX());
+    QString reg_Y_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetY()), emulator->get6502()->GetY());
+    QString reg_SP_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetP()), emulator->get6502()->GetP());
+    QString reg_PC_value_string = QString::asprintf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c (0x%04x)" ,
+                                                    BYTE_TO_BINARY(emulator->get6502()->GetPC() % 0xFF00),
+                                                    BYTE_TO_BINARY(emulator->get6502()->GetPC() % 0x00FF),
+                                                    emulator->get6502()->GetPC());
+    QString reg_status_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetPC()), emulator->get6502()->GetPC());
+
+    if(register_table == nullptr){
         register_table = new QTableWidget(6, 1);
+        connect(emulator, &Emulator::registersChanged, this, &MainWindow::handleRegistersChanged);
+        // Set up titles
 
-    register_table -> clear();
+        // Register A title
+        QTableWidgetItem *header_reg_A = new QTableWidgetItem();
+        header_reg_A->setText("A");
+        register_table -> setVerticalHeaderItem(0,header_reg_A);
+        // Register X title
+        QTableWidgetItem *header_reg_X = new QTableWidgetItem();
+        header_reg_X->setText("X");
+        register_table -> setVerticalHeaderItem(1,header_reg_X);
+        // Register Y title
+        QTableWidgetItem *header_reg_Y = new QTableWidgetItem();
+        header_reg_Y->setText("Y");
+        register_table -> setVerticalHeaderItem(2,header_reg_Y);
+        // Register SP title
+        QTableWidgetItem *header_reg_SP = new QTableWidgetItem();
+        header_reg_SP->setText("SP");
+        register_table -> setVerticalHeaderItem(3,header_reg_SP);
+        // Register PC title
+        QTableWidgetItem *header_reg_PC = new QTableWidgetItem();
+        header_reg_PC->setText("PC");
+        register_table -> setVerticalHeaderItem(4,header_reg_PC);
+        // Register status title
+        QTableWidgetItem *header_reg_status = new QTableWidgetItem();
+        header_reg_status->setText("Status");
+        register_table -> setVerticalHeaderItem(5,header_reg_status);
+        // Horizontal title
+        QTableWidgetItem *header_horizontal = new QTableWidgetItem();
+        header_horizontal->setText("");
+        register_table -> setHorizontalHeaderItem(0,header_horizontal);
 
-    // Set up titles
+        // Set register values
 
-    // Register A title
-    QTableWidgetItem *header_reg_A = new QTableWidgetItem();
-    header_reg_A->setText("A");
-    register_table -> setVerticalHeaderItem(0,header_reg_A);
-    // Register X title
-    QTableWidgetItem *header_reg_X = new QTableWidgetItem();
-    header_reg_X->setText("X");
-    register_table -> setVerticalHeaderItem(1,header_reg_X);
-    // Register Y title
-    QTableWidgetItem *header_reg_Y = new QTableWidgetItem();
-    header_reg_Y->setText("Y");
-    register_table -> setVerticalHeaderItem(2,header_reg_Y);
-    // Register SP title
-    QTableWidgetItem *header_reg_SP = new QTableWidgetItem();
-    header_reg_SP->setText("SP");
-    register_table -> setVerticalHeaderItem(3,header_reg_SP);
-    // Register PC title
-    QTableWidgetItem *header_reg_PC = new QTableWidgetItem();
-    header_reg_PC->setText("PC");
-    register_table -> setVerticalHeaderItem(4,header_reg_PC);
-    // Register status title
-    QTableWidgetItem *header_reg_status = new QTableWidgetItem();
-    header_reg_status->setText("Status");
-    register_table -> setVerticalHeaderItem(5,header_reg_status);
-    // Horizontal title
-    QTableWidgetItem *header_horizontal = new QTableWidgetItem();
-    header_horizontal->setText("");
-    register_table -> setHorizontalHeaderItem(0,header_horizontal);
-
-    // Set register values
-
-    // Register A
-    QTableWidgetItem *reg_A_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetA()), emulator->get6502()->GetA()));
-    register_table -> setItem(0,0, reg_A_value);
-    // Register X
-    QTableWidgetItem *reg_X_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetX()), emulator->get6502()->GetX()));
-    register_table -> setItem(1,0, reg_X_value);
-    // Register Y
-    QTableWidgetItem *reg_Y_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetY()), emulator->get6502()->GetY()));
-    register_table -> setItem(2,0, reg_Y_value);
-    // Register SP
-    QTableWidgetItem *reg_SP_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetS()), emulator->get6502()->GetS()));
-    register_table -> setItem(3,0, reg_SP_value);
-    // Register PC
-    QTableWidgetItem *reg_PC_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c (0x%04x)" ,
-                                                                            BYTE_TO_BINARY(emulator->get6502()->GetPC() % 0xFF00),
-                                                                            BYTE_TO_BINARY(emulator->get6502()->GetPC() % 0x00FF),
-                                                                            emulator->get6502()->GetPC()));
-    register_table -> setItem(4,0, reg_PC_value);
-    // Register status
-    QTableWidgetItem *reg_status_value = new QTableWidgetItem(QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetP()), emulator->get6502()->GetP()));
-    register_table -> setItem(5, 0, reg_status_value);
+        // Register A
+        QTableWidgetItem *reg_A_value = new QTableWidgetItem(reg_A_value_string);
+        register_table -> setItem(0,0, reg_A_value);
+        // Register X
+        QTableWidgetItem *reg_X_value = new QTableWidgetItem(reg_X_value_string);
+        register_table -> setItem(1,0, reg_X_value);
+        // Register Y
+        QTableWidgetItem *reg_Y_value = new QTableWidgetItem(reg_Y_value_string);
+        register_table -> setItem(2,0, reg_Y_value);
+        // Register SP
+        QTableWidgetItem *reg_SP_value = new QTableWidgetItem(reg_SP_value_string);
+        register_table -> setItem(3,0, reg_SP_value);
+        // Register PC
+        QTableWidgetItem *reg_PC_value = new QTableWidgetItem(reg_PC_value_string);
+        register_table -> setItem(4,0, reg_PC_value);
+        // Register status
+        QTableWidgetItem *reg_status_value = new QTableWidgetItem(reg_status_value_string);
+        register_table -> setItem(5, 0, reg_status_value);
+    } else {
+        // Register A
+        register_table -> item(0,0) -> setText(reg_A_value_string);
+        // Register X
+        register_table -> item(1,0) -> setText(reg_X_value_string);
+        // Register Y
+        register_table -> item(2,0) -> setText(reg_Y_value_string);
+        // Register S
+        register_table -> item(3,0) -> setText(reg_SP_value_string);
+        // Register PC
+        register_table -> item(4,0) -> setText(reg_PC_value_string);
+        // Register status
+        register_table -> item(5,0) -> setText(reg_status_value_string);
+    }
 
     // Align width to contents (need to fit the program counter)
     register_table -> resizeColumnsToContents();
@@ -319,6 +339,34 @@ void MainWindow::updateOpenFileContents(){
 
 void MainWindow::updateOpenFile(int selectedFileIndex){
     if(loadedFiles->size() > 0) this -> editor -> setPlainText(this -> loadedFiles -> at(selectedFileIndex).contents);
+}
+
+void MainWindow::handleRegistersChanged(std::vector<Emulator::Register> registers_to_update){
+    for(int row = 0; row < register_table -> rowCount(); row++){
+        register_table -> item(row,0) -> setBackground(QBrush(Qt::white));
+    }
+    for(Emulator::Register reg: registers_to_update){
+        switch(reg){
+        case Emulator::Register::A:
+            register_table -> item(0,0) -> setBackground(QBrush(Qt::yellow));
+            break;
+        case Emulator::Register::X:
+            register_table -> item(1,0) -> setBackground(QBrush(Qt::yellow));
+            break;
+        case Emulator::Register::Y:
+            register_table -> item(2,0) -> setBackground(QBrush(Qt::yellow));
+            break;
+        case Emulator::Register::P:
+            register_table -> item(3,0) -> setBackground(QBrush(Qt::yellow));
+            break;
+        case Emulator::Register::PC:
+            register_table -> item(4,0) -> setBackground(QBrush(Qt::yellow));
+            break;
+        case Emulator::Register::S:
+            register_table -> item(5,0) -> setBackground(QBrush(Qt::yellow));
+            break;
+        }
+    }
 }
 
 void MainWindow::emulatorStep(){

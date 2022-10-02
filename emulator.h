@@ -59,9 +59,19 @@ public:
     #endif
     constexpr static size_t kProgMemOffset = 0x5f00;
 
+    enum Register{
+        A,
+        P,
+        PC,
+        S,
+        X,
+        Y
+    };
+
 signals:
     void memoryChanged(uint16_t address);
     void instructionRan();
+    void registersChanged(std::vector<Register> registers_to_update);
 
 private:
     // The CPU instance
