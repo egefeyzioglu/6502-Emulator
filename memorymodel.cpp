@@ -18,7 +18,7 @@ int MemoryModel::rowCount(const QModelIndex &parent) const{
 }
 
 int MemoryModel::columnCount(const QModelIndex &parent) const{
-    return 0x10;
+    return 0x11;
 }
 
 QVariant MemoryModel::headerData(int section, Qt::Orientation orientation, int role) const{
@@ -33,7 +33,7 @@ QVariant MemoryModel::headerData(int section, Qt::Orientation orientation, int r
         else
             return QString("%1").arg(section, 1, 16);
     }else{
-        return QString("%1").arg(section * this -> columnCount(), 4, 16, QLatin1Char('0'));
+        return QString("%1").arg(section * (this -> columnCount() - 1), 4, 16, QLatin1Char('0'));
     }
 }
 
@@ -55,7 +55,7 @@ QVariant MemoryModel::data(const QModelIndex &index, int role) const{
                 return QVariant(QString::fromLatin1((char*) line, (qsizetype) (this -> columnCount() - 1)));
             }else{
                 // Grab memory value and return
-                auto ret = QVariant(QString("%1").arg((emulator -> getMemoryValue((index.row()) * columnCount() + index.column())), 2, 16, QLatin1Char('0')));
+                auto ret = QVariant(QString("%1").arg((emulator -> getMemoryValue((index.row()) * (columnCount() - 1) + index.column())), 2, 16, QLatin1Char('0')));
                 return ret;
             }
         } else {
@@ -100,7 +100,7 @@ bool MemoryModel::setData(const QModelIndex &index, const QVariant &value, int r
         int val = value.toString().toUInt(&ok, 16);
         if(ok && val < 0x100) {
             // And if the parsed integer fits in a byte, set the byte
-            emulator -> setMemoryValue((index.row()) * columnCount() + index.column(), val);
+            emulator -> setMemoryValue((index.row()) * (columnCount() - 1) + index.column(), val);
             return true;
         }
     }
