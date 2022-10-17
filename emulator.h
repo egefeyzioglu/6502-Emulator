@@ -3,8 +3,10 @@
 #include <QObject>
 
 #include <vector>
+#include <map>
 
 #include "mos6502.h"
+#include "memorymappeddevice.h"
 
 // Forward declaration of the emulator class
 class Emulator;
@@ -119,6 +121,24 @@ public:
         Y
     };
 
+    struct AddressRange{
+        AddressRange(uint16_t base_address, uint16_t end_address) : base_address{base_address}, end_address{end_address} {};
+
+        uint16_t base_address;
+        uint16_t end_address;
+
+        bool operator<(const AddressRange rhs) const{
+            return this -> base_address < rhs.base_address;
+        }
+    };
+
+    /**
+     * Slot for when memory assigned to a DMA device changes without being directly set by the CPU
+     *
+     * Emits memoryChanged with the same parameter
+     */
+    void deviceMemoryChanged(uint16_t address);
+
 signals:
     void memoryChanged(uint16_t address);
     void instructionRan();
@@ -147,6 +167,19 @@ private:
     EmulatorState *previousState;
 
     QThread *workerThread;
+
+    /**
+     * A map of all the memory devices we know of
+     * The key is the `AddressRange` of the device, and the value is the
+     * device object itself
+     */
+    std::map<AddressRange, MemoryMappedDevice*> memoryDevices;
+
+    /**
+     * Adds a memory mapped device to the emulator
+     * @param device
+     */
+    void addMemoryDevice(MemoryMappedDevice *device);
 
     friend void EmulatorHelper::registerEmulator(Emulator *emulator);
     friend void EmulatorHelper::deregisterEmulator();;

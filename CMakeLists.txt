@@ -37,6 +37,11 @@ set(PROJECT_SOURCES
         syntaxhighlighter.cpp
         memorymodel.h
         memorymodel.cpp
+        memorymappeddevice.h
+        programram.h
+        programram.cpp
+        rom.h
+        rom.cpp
 )
 
 

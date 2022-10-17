@@ -7,6 +7,8 @@
 #include "emulator.h"
 #include "mos6502.h"
 #include "log.h"
+#include "programram.h"
+#include "rom.h"
 
 Emulator::Emulator(){
     // Allocate memory
@@ -16,18 +18,27 @@ Emulator::Emulator(){
     // Register to the helper functions
     EmulatorHelper::registerEmulator(this);
 
+    // Set up memory
+    ProgramRAM *programRAM = new ProgramRAM(0x0000, 0x3fff);
+    addMemoryDevice(programRAM);
+    ROM *programROM = new ROM(0x91ff, 0xffff - 0x91ff, 0xff);
+    addMemoryDevice(programROM);
+
     // Instantiate cpu
     this -> cpu = new mos6502(EmulatorHelper::busRead, EmulatorHelper::busWrite);
-    #ifndef lowerMemory // We can't load the reset vector if we don't have the whole memory
     // Reset the cpu
     this -> cpu -> Reset();
     isRunning = false;
-    #endif
 }
 
 Emulator::~Emulator(){
     // Deregister from helper functions
     EmulatorHelper::deregisterEmulator();
+
+    // Clean up memory mapped devices
+    for(auto memoryDevice : memoryDevices){
+        delete memoryDevice.second;
+    }
 
     // Clean up memory
     delete[] memory;
@@ -39,7 +50,12 @@ mos6502 *Emulator::get6502(){
 }
 
 uint8_t Emulator::getMemoryValue(uint16_t address){
-    return this -> memory[address];
+    for(auto const &memoryDevice : this -> memoryDevices){
+        if(memoryDevice.first.base_address <= address && memoryDevice.first.end_address >= address){
+            return memoryDevice.second->getValue(address);
+        }
+    }
+    return 0xFF; // Return -1 if the address is invalid
 }
 
 /**
@@ -48,8 +64,12 @@ uint8_t Emulator::getMemoryValue(uint16_t address){
  * @param value
  */
 void Emulator::setMemoryValue(uint16_t address, uint8_t value){
-    this -> memory[address] = value;
-    if(!isRunning) emit memoryChanged(address);
+    for(auto const &memoryDevice : this -> memoryDevices){
+        if(memoryDevice.first.base_address <= address && memoryDevice.first.end_address >= address){
+            memoryDevice.second->setValue(address, value);
+            if(!isRunning) emit memoryChanged(address);
+        }
+    }
 }
 
 int Emulator::step(){
@@ -205,3 +225,18 @@ void ProcessorRunWorker::interrupt(){
 }
 
 ProcessorRunWorker::ProcessorRunWorker(Emulator *emulator) : emulator{emulator} {}
+
+void Emulator::addMemoryDevice(MemoryMappedDevice *device){
+    // Format correctly and add to the map
+    this -> memoryDevices[
+            Emulator::AddressRange(device -> getBaseAddress(), // The base address
+                                   device -> getBaseAddress() + device -> getAddressSpaceLength() // The end address
+                                   )
+            ] = device;
+    connect(device, &MemoryMappedDevice::addressChanged, this, &Emulator::deviceMemoryChanged);
+}
+
+
+void Emulator::deviceMemoryChanged(uint16_t address){
+    emit memoryChanged(address);
+}
