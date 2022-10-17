@@ -25,7 +25,7 @@ namespace EmulatorHelper{
     // Memory - CPU interface, get
     uint8_t busRead(uint16_t address);
 
-    void replaceMemory(uint8_t *newContents, size_t offset, size_t lenght);
+    void replaceMemory(uint8_t *new_contents, size_t offset, size_t lenght);
 }
 
 
@@ -37,7 +37,7 @@ public:
     void runCPU();
     void interrupt();
 
-    bool shouldRun = true;
+    bool should_run = true;
     Emulator *emulator;
 };
 
@@ -78,12 +78,12 @@ public:
     /**
      * The CPU will attempt to run at this speed
      */
-    int clockSpeed = 1000000;
+    int clock_speed = 1000000;
 
     /**
      * The actual speed the CPU is running at
      */
-    double realClockSpeed = 0;
+    double real_clock_speed = 0;
 
     /**
      * The state of the emulator can be stored in this class. It will remember the registers and the entire memory
@@ -159,21 +159,21 @@ private:
      * When true, run() can't be called (will immediately return,) and memory and register
      * changes aren't reported to the UI
      */
-    bool isRunning;
+    bool is_running;
 
     /**
      * The emulator's state before run() is called
      */
-    EmulatorState *previousState;
+    EmulatorState *previous_state;
 
-    QThread *workerThread;
+    QThread *worker_thread;
 
     /**
      * A map of all the memory devices we know of
      * The key is the `AddressRange` of the device, and the value is the
      * device object itself
      */
-    std::map<AddressRange, MemoryMappedDevice*> memoryDevices;
+    std::map<AddressRange, MemoryMappedDevice*> memory_devices;
 
     /**
      * Adds a memory mapped device to the emulator

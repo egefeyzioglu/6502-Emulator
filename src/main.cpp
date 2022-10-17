@@ -16,7 +16,7 @@
 Emulator *emulator;
 
 // The main window instance
-MainWindow *mainWindow;
+MainWindow *main_window;
 
 const std::string kApplicationName = "6502 Emulator";
 const std::string kApplicationVersion = "0.1";
@@ -39,10 +39,10 @@ int main(int argc, char *argv[]){
 
     // If we specified a file to open, remember to open it later
 
-    std::string fileNameToOpen = "";
+    std::string file_name_to_open = "";
 
     if(!args.empty()){
-        fileNameToOpen = args[0].toStdString();
+        file_name_to_open = args[0].toStdString();
     }
 
     // Create the emulator object first
@@ -51,12 +51,12 @@ int main(int argc, char *argv[]){
 
     // Create the main window object
 
-    mainWindow = new MainWindow(kApplicationName);
+    main_window = new MainWindow(kApplicationName);
 
     // If we remembered a file to open, do so
 
-    if(fileNameToOpen.length() > 0){
-        mainWindow->loadFile(fileNameToOpen);
+    if(file_name_to_open.length() > 0){
+        main_window->loadFile(file_name_to_open);
     }
 
     // Run the application

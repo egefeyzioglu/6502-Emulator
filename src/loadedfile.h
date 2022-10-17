@@ -13,9 +13,9 @@ class LoadedFile
 {
 public:
     QString contents = "";
-    QString fileName = "";
-    std::string fullPath = "";
-    bool savedSinceLastEdit = false;
+    QString file_name = "";
+    std::string full_path = "";
+    bool saved_since_last_edit = false;
 };
 
 #endif // LOADEDFILE_H

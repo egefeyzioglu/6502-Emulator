@@ -160,52 +160,52 @@ void MainWindow::updateRegisterTable(QTableWidget *&register_table){
  * @param dockWidget the dock widget
  * @param isFloating is this widget floating
  */
-void MainWindow::updateDockTitle(QDockWidget  *dockWidget, bool isFloating){
+void MainWindow::updateDockTitle(QDockWidget  *dock_widget, bool is_floating){
 
     // Seperator between base title and kWindowTitle
     QString seperator = " | ";
 
-    if(isFloating){
+    if(is_floating){
         // Add kWindowTitle and seperator to the tab title
-        dockWidget -> setWindowTitle(
-                    dockWidget -> windowTitle() +
+        dock_widget -> setWindowTitle(
+                    dock_widget -> windowTitle() +
                     seperator +
                     QString::fromUtf8( this -> kWindowTitle.data(), this -> kWindowTitle.size())
                     );
     }else{
         // Remove kWindowTitle and seperator from the tab title
-        dockWidget -> setWindowTitle(
-                    dockWidget -> windowTitle().first(dockWidget -> windowTitle().size() - (seperator.size() + this -> kWindowTitle.length()))
+        dock_widget -> setWindowTitle(
+                    dock_widget -> windowTitle().first(dock_widget -> windowTitle().size() - (seperator.size() + this -> kWindowTitle.length()))
                     );
     }
 }
 
 // Slots for when the dock widgets start and stop floating
 
-void MainWindow::updateDockTitleMemory(bool isFloating){
-    updateDockTitle(memory_tab, isFloating);
+void MainWindow::updateDockTitleMemory(bool is_floating){
+    updateDockTitle(memory_tab, is_floating);
 }
-void MainWindow::updateDockTitleRegisters(bool isFloating){
-    updateDockTitle(register_tab, isFloating);
+void MainWindow::updateDockTitleRegisters(bool is_floating){
+    updateDockTitle(register_tab, is_floating);
 }
-void MainWindow::updateDockTitleControls(bool isFloating){
-    updateDockTitle(emulator_controls_tab, isFloating);
+void MainWindow::updateDockTitleControls(bool is_floating){
+    updateDockTitle(emulator_controls_tab, is_floating);
 }
-void MainWindow::updateDockTitleBuildLog(bool isFloating){
-    updateDockTitle(build_log_tab, isFloating);
+void MainWindow::updateDockTitleBuildLog(bool is_floating){
+    updateDockTitle(build_log_tab, is_floating);
 }
 
 // Menu slots
 
 void MainWindow::handleMenuOpen(){
     // Create a file picker dialog
-    openDialog = new QFileDialog(this);
-    openDialog -> setNameFilter(tr("Assembly Files (*.s);;C Source Files (*.c);;C Header Files (*.h);;Any File(*)"));
-    openDialog -> setViewMode(QFileDialog::Detail);
-    QStringList fileNames;
-    if (openDialog -> exec()){ // If the user picked a file,
+    open_dialog = new QFileDialog(this);
+    open_dialog -> setNameFilter(tr("Assembly Files (*.s);;C Source Files (*.c);;C Header Files (*.h);;Any File(*)"));
+    open_dialog -> setViewMode(QFileDialog::Detail);
+    QStringList file_names;
+    if (open_dialog -> exec()){ // If the user picked a file,
         // Load the file
-        loadFile(openDialog -> selectedFiles()[0].toStdString());
+        loadFile(open_dialog -> selectedFiles()[0].toStdString());
     }
 }
 
@@ -215,23 +215,23 @@ void MainWindow::handleMenuNew(){
     QString kNewFileExtension = ".s";
 
     // The number of files open named the new file name
-    int untitledCount = std::count_if(loadedFiles -> begin(), loadedFiles -> end(), [=](LoadedFile file){return file.fileName.startsWith(kNewFileName);});
+    int untitled_count = std::count_if(loaded_files -> begin(), loaded_files -> end(), [=](LoadedFile file){return file.file_name.startsWith(kNewFileName);});
 
     // Set the new document name to the new file name, then maybe a number
     editor -> setDocumentTitle(kNewFileName
-                               + (untitledCount != 0 ?  QString("_") + QString::number(untitledCount) : "")
+                               + (untitled_count != 0 ?  QString("_") + QString::number(untitled_count) : "")
                                + kNewFileExtension);
     // Store new file name and contents
-    LoadedFile newFileObj;
-    newFileObj.fileName = editor -> documentTitle();
-    newFileObj.fullPath = "";
-    newFileObj.contents = QString(); // Assumed empty string since the editor still has the old contents at this point
-    newFileObj.savedSinceLastEdit = false;
-    loadedFiles -> push_back(newFileObj);
+    LoadedFile new_file_obj;
+    new_file_obj.file_name = editor -> documentTitle();
+    new_file_obj.full_path = "";
+    new_file_obj.contents = QString(); // Assumed empty string since the editor still has the old contents at this point
+    new_file_obj.saved_since_last_edit = false;
+    loaded_files -> push_back(new_file_obj);
 
     // Add the file as an option to fileDropdown
-    fileDropdown -> addItem(editor -> documentTitle());
-    fileDropdown -> setCurrentIndex(fileDropdown -> count() - 1);
+    file_dropdown -> addItem(editor -> documentTitle());
+    file_dropdown -> setCurrentIndex(file_dropdown -> count() - 1);
 
     // Clear the editor
     editor -> setPlainText(QString());
@@ -239,41 +239,41 @@ void MainWindow::handleMenuNew(){
     this -> updateOpenFileContents();
 
     // Update the editor title
-    editorTitle -> setText(newFileObj.fileName);
+    editor_title -> setText(new_file_obj.file_name);
 
 }
 
 void MainWindow::handleMenuSaveAs(){
     // Create a new file picker dialog
-    openDialog = new QFileDialog(this);
-    openDialog -> setNameFilter(tr("Assembly Files (*.s);;C Source Files (*.c);;C Header Files (*.h);;Any File(*)"));
-    openDialog -> setViewMode(QFileDialog::Detail);
-    openDialog -> setAcceptMode(QFileDialog::AcceptSave);
-    QStringList fileNames;
-    if (openDialog -> exec()){ // If the user picks a file
-        fileNames = openDialog -> selectedFiles();
+    open_dialog = new QFileDialog(this);
+    open_dialog -> setNameFilter(tr("Assembly Files (*.s);;C Source Files (*.c);;C Header Files (*.h);;Any File(*)"));
+    open_dialog -> setViewMode(QFileDialog::Detail);
+    open_dialog -> setAcceptMode(QFileDialog::AcceptSave);
+    QStringList file_names;
+    if (open_dialog -> exec()){ // If the user picks a file
+        file_names = open_dialog -> selectedFiles();
 
         // Open the file and write to it
-        std::ofstream newFile;
-        newFile.open(fileNames[0].toStdString(), ios::out);
-        newFile << editor ->toPlainText().toStdString();
+        std::ofstream new_file;
+        new_file.open(file_names[0].toStdString(), ios::out);
+        new_file << editor ->toPlainText().toStdString();
 
         // Update the editor title
-        editor -> setDocumentTitle(fileNames[0]);
+        editor -> setDocumentTitle(file_names[0]);
 
         // Get the current LoadedFile object from loadedFiles and update it
-        LoadedFile &file = loadedFiles -> at(fileDropdown ->currentIndex());
-        auto newFilePathObj = std::filesystem::path(fileNames[0] . toStdString());
-        std::string newFileName = newFilePathObj.filename().u8string();
-        file.fileName = QString::fromStdString(newFileName);
-        file.fullPath = fileNames[0].toStdString();
-        file.savedSinceLastEdit = true;
+        LoadedFile &file = loaded_files -> at(file_dropdown ->currentIndex());
+        auto new_file_path_obj = std::filesystem::path(file_names[0] . toStdString());
+        std::string new_file_name = new_file_path_obj.filename().u8string();
+        file.file_name = QString::fromStdString(new_file_name);
+        file.full_path = file_names[0].toStdString();
+        file.saved_since_last_edit = true;
 
         // Update the fileDropdown item
-        fileDropdown -> setItemText(fileDropdown ->currentIndex(), fileNames[0]);
+        file_dropdown -> setItemText(file_dropdown ->currentIndex(), file_names[0]);
 
         // Update the editor title
-        editorTitle -> setText(file.fileName);
+        editor_title -> setText(file.file_name);
 
     }
 }
@@ -281,35 +281,35 @@ void MainWindow::handleMenuSaveAs(){
 void MainWindow::handleMenuSave(){
     // The fullPath property is never set (initialised to empty string) if we've never saved before
     // If so, treat this as Save As
-    if(loadedFiles -> at(fileDropdown -> currentIndex()).fullPath == "") this -> handleMenuSaveAs();
+    if(loaded_files -> at(file_dropdown -> currentIndex()).full_path == "") this -> handleMenuSaveAs();
     else{
         // Otherwise, open the file and write to it
-        std::ofstream newFile;
-        newFile.open(editor -> documentTitle().toStdString(), ios::out);
-        newFile << editor ->toPlainText().toStdString();
-        loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit = true;
+        std::ofstream new_file;
+        new_file.open(editor -> documentTitle().toStdString(), ios::out);
+        new_file << editor ->toPlainText().toStdString();
+        loaded_files -> at(file_dropdown -> currentIndex()).saved_since_last_edit = true;
     }
 }
 
 void MainWindow::handleMenuClose(){
     // If we don't have any files, return (this could happen if the user spams Ctrl + W)
-    if(loadedFiles->size() == 0) return;
+    if(loaded_files->size() == 0) return;
 
     // See if the current file was saved before the last edit
-    if(loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit){ // If it has, delete it
+    if(loaded_files -> at(file_dropdown -> currentIndex()).saved_since_last_edit){ // If it has, delete it
         // Erase the loadedFiles object and remove item from dropdown (TODO: Check if file was saved and ask to confirm if it wasn't)
-        loadedFiles->erase(loadedFiles->begin() + fileDropdown -> currentIndex());
-        fileDropdown -> removeItem(fileDropdown -> currentIndex());
+        loaded_files->erase(loaded_files->begin() + file_dropdown -> currentIndex());
+        file_dropdown -> removeItem(file_dropdown -> currentIndex());
 
         // If we ran out of files, create a new one
-        if(loadedFiles->size() == 0) handleMenuNew();
+        if(loaded_files->size() == 0) handleMenuNew();
 
         // Update the editor title
-        editorTitle -> setText(loadedFiles -> at(fileDropdown -> currentIndex()).fileName);
+        editor_title -> setText(loaded_files -> at(file_dropdown -> currentIndex()).file_name);
     }else{ // If it hasn't been saved, ask if the user wants to
         // Create a message box
         QMessageBox confirm;
-        confirm.setText("Save file " + loadedFiles -> at(fileDropdown -> currentIndex()).fileName + "?");
+        confirm.setText("Save file " + loaded_files -> at(file_dropdown -> currentIndex()).file_name + "?");
         confirm.setIcon(QMessageBox::Question);
         confirm.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
         confirm.setDefaultButton(QMessageBox::Save);
@@ -323,7 +323,7 @@ void MainWindow::handleMenuClose(){
             break;
         case QMessageBox::Discard:  // If the user doesn't want to save, don't save.
                                     // Pretend the file was saved
-            loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit = true;
+            loaded_files -> at(file_dropdown -> currentIndex()).saved_since_last_edit = true;
             // Call this function again (we marked the file as saved so we won't reach here)
             handleMenuClose();
             break;
@@ -335,13 +335,13 @@ void MainWindow::handleMenuClose(){
 }
 
 void MainWindow::updateOpenFileContents(){
-    auto currentFile = this -> loadedFiles -> at(this -> fileDropdown -> currentIndex());
-    currentFile.contents = this -> editor -> toPlainText();
-    currentFile.savedSinceLastEdit = false;
+    auto current_file = this -> loaded_files -> at(this -> file_dropdown -> currentIndex());
+    current_file.contents = this -> editor -> toPlainText();
+    current_file.saved_since_last_edit = false;
 }
 
 void MainWindow::updateOpenFile(int selectedFileIndex){
-    if(loadedFiles->size() > 0) this -> editor -> setPlainText(this -> loadedFiles -> at(selectedFileIndex).contents);
+    if(loaded_files->size() > 0) this -> editor -> setPlainText(this -> loaded_files -> at(selectedFileIndex).contents);
 }
 
 void MainWindow::handleRegistersChanged(std::vector<Emulator::Register> registers_to_update){
@@ -379,8 +379,8 @@ void MainWindow::emulatorStep(){
 
 void MainWindow::addToBuildLog(QString newContent){
 
-    buildLog -> setPlainText(buildLog -> toPlainText() + "\n" + newContent);
-    buildLog -> verticalScrollBar() -> setValue(buildLog -> verticalScrollBar() -> maximum());
+    build_log -> setPlainText(build_log -> toPlainText() + "\n" + newContent);
+    build_log -> verticalScrollBar() -> setValue(build_log -> verticalScrollBar() -> maximum());
 }
 
 void MainWindow::interruptEmulator(){
@@ -389,10 +389,10 @@ void MainWindow::interruptEmulator(){
 
 void MainWindow::compileAndLoad(){
     // Check if we saved this file, prompt to save if not
-    if(!loadedFiles -> at(fileDropdown -> currentIndex()).savedSinceLastEdit){
+    if(!loaded_files -> at(file_dropdown -> currentIndex()).saved_since_last_edit){
         // Create a message box
         QMessageBox confirm;
-        confirm.setText("Save file " + loadedFiles -> at(fileDropdown -> currentIndex()).fileName + "?");
+        confirm.setText("Save file " + loaded_files -> at(file_dropdown -> currentIndex()).file_name + "?");
         confirm.setIcon(QMessageBox::Question);
         confirm.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
         confirm.setDefaultButton(QMessageBox::Save);
@@ -415,35 +415,35 @@ void MainWindow::compileAndLoad(){
 
     // Compile/assmeble
 
-    QString dasmPath = "C:\\Program Files\\dasm\\dasm.exe";
-    QStringList dasmArgs;
+    QString dasm_path = "C:\\Program Files\\dasm\\dasm.exe";
+    QStringList dasm_args;
 
-    LoadedFile currentFile = loadedFiles -> at(fileDropdown->currentIndex());
+    LoadedFile current_file = loaded_files -> at(file_dropdown->currentIndex());
 
-    std::string outFileName = currentFile.fullPath.substr(0, currentFile.fullPath.find_last_of(".")) + ".tmp";
+    std::string out_file_name = current_file.full_path.substr(0, current_file.full_path.find_last_of(".")) + ".tmp";
 
-    dasmArgs << QString::fromUtf8(currentFile.fullPath);
-    dasmArgs << "-v5" << "-f3" << QString::fromUtf8("-o" + outFileName);
+    dasm_args << QString::fromUtf8(current_file.full_path);
+    dasm_args << "-v5" << "-f3" << QString::fromUtf8("-o" + out_file_name);
 
-    QProcess *compilerProcess = new QProcess();
-    compilerProcess -> start(dasmPath, dasmArgs);
-    if(!compilerProcess->waitForFinished()){
+    QProcess *compiler_process = new QProcess();
+    compiler_process -> start(dasm_path, dasm_args);
+    if(!compiler_process->waitForFinished()){
         Log::Warning() << "Timed out waiting for assembler";
     }
 
-    QByteArray compilerOutput = compilerProcess -> readAll();
-    addToBuildLog(QString::fromUtf8(compilerOutput.toStdString()));
+    QByteArray compiler_output = compiler_process -> readAll();
+    addToBuildLog(QString::fromUtf8(compiler_output.toStdString()));
 
     // Load
 
     // Creat ifstream and buffer to read into and read file
-    std::ifstream outputFileInputStream(outFileName, std::ios::binary);
+    std::ifstream output_file_input_stream(out_file_name, std::ios::binary);
     char inBuf[emulator -> kMemorySize];
-    if(!outputFileInputStream.read(inBuf, emulator -> kMemorySize) && !outputFileInputStream.eof()){
-        Log::Warning() << "Could not read assembly output file when loading. rdstate = " << outputFileInputStream.rdstate();
+    if(!output_file_input_stream.read(inBuf, emulator -> kMemorySize) && !output_file_input_stream.eof()){
+        Log::Warning() << "Could not read assembly output file when loading. rdstate = " << output_file_input_stream.rdstate();
         Log::Warning() << "eofbit = " << std::ifstream::eofbit << ", failbit = " << std::ifstream::failbit << ", badbit = " << std::ifstream::badbit << ", goodbit = " << std::ifstream::goodbit;
     }else{
-        EmulatorHelper::replaceMemory((uint8_t*) inBuf, emulator -> kProgMemOffset, outputFileInputStream.gcount());
+        EmulatorHelper::replaceMemory((uint8_t*) inBuf, emulator -> kProgMemOffset, output_file_input_stream.gcount());
     }
     this -> resetEmulator();
     // Update memory view
@@ -455,22 +455,22 @@ void MainWindow::resetEmulator(){
     updateRegisterTable(register_table);
 }
 
-void MainWindow::setUpEditor(QWidget *&editorContainer, QTextEdit *&editor, QLabel *&editorTitle){
+void MainWindow::setUpEditor(QWidget *&editor_container, QTextEdit *&editor, QLabel *&editor_title){
     // Create the editor container, its layout, the editor, and editor title
-    editorContainer = new QWidget();
-    editorTitle = new QLabel();
+    editor_container = new QWidget();
+    editor_title = new QLabel();
     editor = new QTextEdit();
-    QVBoxLayout *editorContainerLayout = new QVBoxLayout();
+    QVBoxLayout *editor_container_layout = new QVBoxLayout();
 
     // Add the widgets to the container layout
-    editorContainerLayout -> addWidget(editorTitle);
-    editorContainerLayout -> addWidget(editor);
+    editor_container_layout -> addWidget(editor_title);
+    editor_container_layout -> addWidget(editor);
 
     // Apply the layout to the container
-    editorContainer -> setLayout(editorContainerLayout);
+    editor_container -> setLayout(editor_container_layout);
 
     // Create syntax highlighter, apply to the editor's document
-    syntaxHighlighter = new SyntaxHighlighter(editor -> document());
+    syntax_highlighter = new SyntaxHighlighter(editor -> document());
 
     QFont font("Consolas");
     editor -> document() -> setDefaultFont(font);
@@ -479,12 +479,12 @@ void MainWindow::setUpEditor(QWidget *&editorContainer, QTextEdit *&editor, QLab
 
 }
 
-void MainWindow::setUpBuildLog(QPlainTextEdit *&compilerLog){
-    compilerLog = new QPlainTextEdit();
-    compilerLog -> setTextInteractionFlags(Qt::TextBrowserInteraction | Qt::TextSelectableByKeyboard);
+void MainWindow::setUpBuildLog(QPlainTextEdit *&compiler_log){
+    compiler_log = new QPlainTextEdit();
+    compiler_log -> setTextInteractionFlags(Qt::TextBrowserInteraction | Qt::TextSelectableByKeyboard);
 }
 
-void MainWindow::setUpEmulatorControls(QWidget *&emulatorControlsWrapper){
+void MainWindow::setUpEmulatorControls(QWidget *&emulator_controls_wrapper){
     // Emulator controls
     step_button = new QPushButton(tr("Step"));
     run_button = new QPushButton(tr("Run"));
@@ -494,24 +494,24 @@ void MainWindow::setUpEmulatorControls(QWidget *&emulatorControlsWrapper){
     real_clock_speed_label = new QLabel(tr("Actual Clock Speed"));
     real_clock_speed_value = new QLabel(tr("Stopped"));
 
-    QGridLayout *emulatorControlsLayout = new QGridLayout();
-    emulatorControlsWrapper = new QWidget();
+    QGridLayout *emulator_controls_layout = new QGridLayout();
+    emulator_controls_wrapper = new QWidget();
 
-    emulatorControlsLayout -> addWidget(step_button, 0, 0, 1, 1);
-    emulatorControlsLayout -> addWidget(run_button, 0, 1, 1, 1);
-    emulatorControlsLayout -> addWidget(interrupt_button, 0, 2, 1, 1);
-    emulatorControlsLayout -> addWidget(clock_speed_label, 1, 0, 1, 1);
-    emulatorControlsLayout -> addWidget(clock_speed_value, 1, 1, 1, 2);
-    emulatorControlsLayout -> addWidget(real_clock_speed_label, 2, 0, 1, 1);
-    emulatorControlsLayout -> addWidget(real_clock_speed_value, 2, 1, 1, 2);
+    emulator_controls_layout -> addWidget(step_button, 0, 0, 1, 1);
+    emulator_controls_layout -> addWidget(run_button, 0, 1, 1, 1);
+    emulator_controls_layout -> addWidget(interrupt_button, 0, 2, 1, 1);
+    emulator_controls_layout -> addWidget(clock_speed_label, 1, 0, 1, 1);
+    emulator_controls_layout -> addWidget(clock_speed_value, 1, 1, 1, 2);
+    emulator_controls_layout -> addWidget(real_clock_speed_label, 2, 0, 1, 1);
+    emulator_controls_layout -> addWidget(real_clock_speed_value, 2, 1, 1, 2);
 
-    emulatorControlsWrapper -> setLayout(emulatorControlsLayout);
+    emulator_controls_wrapper -> setLayout(emulator_controls_layout);
 
-    clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> clockSpeed));
+    clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> clock_speed));
 
-    QTimer *clockSpeedRefreshTimer = new QTimer(this);
-    connect(clockSpeedRefreshTimer, &QTimer::timeout, this, &MainWindow::updateRealClockRate);
-    clockSpeedRefreshTimer -> start(kClockSpeedRefreshMillis);
+    QTimer *clock_speed_refresh_timer = new QTimer(this);
+    connect(clock_speed_refresh_timer, &QTimer::timeout, this, &MainWindow::updateRealClockRate);
+    clock_speed_refresh_timer -> start(kClockSpeedRefreshMillis);
 
     connect(clock_speed_value, &QLineEdit::editingFinished, this, &MainWindow::updateClockRate);
     connect(step_button, &QPushButton::clicked, this, &MainWindow::emulatorStep);
@@ -519,15 +519,15 @@ void MainWindow::setUpEmulatorControls(QWidget *&emulatorControlsWrapper){
     connect(interrupt_button, &QPushButton::clicked, this, &MainWindow::interruptEmulator);
 }
 
-double MainWindow::parseClockSpeedString(std::string clockSpeedString){
+double MainWindow::parseClockSpeedString(std::string clock_speed_string){
     // The offset of the unit in the string
-    std::string::size_type unitOffset;
+    std::string::size_type unit_offset;
     // Strip any spaces
-    remove(clockSpeedString.begin(), clockSpeedString.end(), ' ');
+    remove(clock_speed_string.begin(), clock_speed_string.end(), ' ');
     // Grab the number
-    double coefficient = std::stod(clockSpeedString, &unitOffset);
+    double coefficient = std::stod(clock_speed_string, &unit_offset);
     // Grab the unit
-    std::string unit = clockSpeedString.substr(unitOffset, clockSpeedString.length() - unitOffset - 1);
+    std::string unit = clock_speed_string.substr(unit_offset, clock_speed_string.length() - unit_offset - 1);
     // Interpret the unit
     if(unit == "Hz" || unit == ""){ // Base
         return coefficient;
@@ -553,74 +553,74 @@ double MainWindow::parseClockSpeedString(std::string clockSpeedString){
     }
 }
 
-void MainWindow::loadFile(std::string newFilePath){
+void MainWindow::loadFile(std::string new_file_path){
     // Open and read the file into contents
     std::string contents;
     std::string line;
 
-    std::ifstream newFile;
-    newFile.open(newFilePath, ios::in);
+    std::ifstream new_file;
+    new_file.open(new_file_path, ios::in);
 
-    while(getline(newFile, line)){
+    while(getline(new_file, line)){
         contents += line + "\n";
     }
 
     // Create a new LoadedFile object to be inserted into loadedFiles
-    LoadedFile newFileObj;
+    LoadedFile new_file_obj;
 
     // Break down the path to the file name and directory
-    auto newFilePathObj = std::filesystem::path(newFilePath);
-    std::string newFileName = newFilePathObj.filename().u8string();
-    std::string newFileDirectory = newFilePathObj.parent_path().u8string();
+    auto new_file_path_obj = std::filesystem::path(new_file_path);
+    std::string new_file_name = new_file_path_obj.filename().u8string();
+    std::string new_file_directory = new_file_path_obj.parent_path().u8string();
 
     // Populate the LoadedFile object and insert it into the loadedFiles vector
-    newFileObj.fileName = QString::fromStdString(newFileName);
-    newFileObj.fullPath = newFileDirectory + SLASH + newFileName;
-    newFileObj.contents = QString::fromStdString(contents);
-    newFileObj.savedSinceLastEdit = false;
-    loadedFiles -> push_back(newFileObj);
+    new_file_obj.file_name = QString::fromStdString(new_file_name);
+    new_file_obj.full_path = new_file_directory + SLASH + new_file_name;
+    new_file_obj.contents = QString::fromStdString(contents);
+    new_file_obj.saved_since_last_edit = false;
+    loaded_files -> push_back(new_file_obj);
 
     // Add the file as an option to fileDropdown
-    fileDropdown -> addItem(QString::fromStdString(newFilePath));
-    fileDropdown -> setCurrentIndex(fileDropdown -> count() - 1);
+    file_dropdown -> addItem(QString::fromStdString(new_file_path));
+    file_dropdown -> setCurrentIndex(file_dropdown -> count() - 1);
 
     // Update the editor
     editor -> setPlainText(QString::fromUtf8(contents.data(), contents.length()));
-    editor -> setDocumentTitle(QString::fromStdString(newFilePath));
+    editor -> setDocumentTitle(QString::fromStdString(new_file_path));
 
     // Update the editor title
-    editorTitle -> setText(newFileObj.fileName);
+    editor_title -> setText(new_file_obj.file_name);
 }
 
-QString MainWindow::clockSpeedDoubleToString(double clockSpeed){
+QString MainWindow::clockSpeedDoubleToString(double clock_speed){
     // If clock speed is 0, return "Stopped" instead
-    if(clockSpeed == 0) return "Stopped";
+    if(clock_speed == 0) return "Stopped";
     // Get the order of magnitude and add the unit with the according SI prefix
-    int orderOfMagnitude = log10(clockSpeed);
-    switch (orderOfMagnitude){
+    int order_of_magnitude = log10(clock_speed);
+    switch (order_of_magnitude){
     case 0:
     case 1:
     case 2:
-        return QString::number(clockSpeed) + " Hz";
+        return QString::number(clock_speed) + " Hz";
     case 3:
     case 4:
     case 5:
-        return QString::number(clockSpeed/1e3) + " kHz";
+        return QString::number(clock_speed/1e3) + " kHz";
     default:
-        return QString::number(clockSpeed/1e6) + " MHz";
+        return QString::number(clock_speed/1e6) + " MHz";
     }
 }
 
 void MainWindow::updateRealClockRate(){
-    real_clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> realClockSpeed));
+    real_clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> real_clock_speed));
 }
 
 void MainWindow::updateClockRate(){
-    double clockRate = parseClockSpeedString(clock_speed_value -> text().toStdString());
-    if(clockRate != -1){
-        emulator -> clockSpeed = clockRate;
+    double clock_rate = parseClockSpeedString(clock_speed_value -> text().toStdString());
+    if(clock_rate != -1){
+        emulator -> clock_speed = clock_rate;
     }
-    clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> clockSpeed));
+    clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> clock_speed));
 }
 
 MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
@@ -635,10 +635,10 @@ MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
     // Set up the base widgets
     setUpMemoryTable(memory_view);
     updateRegisterTable(register_table);
-    QVBoxLayout *editorContainerLayout;
-    setUpEditor(editorContainer, editor, editorTitle);
-    setUpBuildLog(buildLog);
-    setUpEmulatorControls(emulatorControlsWrapper);
+    QVBoxLayout *editor_container_layout;
+    setUpEditor(editor_container, editor, editor_title);
+    setUpBuildLog(build_log);
+    setUpEmulatorControls(emulator_controls_wrapper);
 
 
     // Set up the dock widgets
@@ -647,10 +647,10 @@ MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
     emulator_controls_tab = new QDockWidget("Controls");
     build_log_tab = new QDockWidget("Build Log");
 
-    emulator_controls_tab -> setWidget(emulatorControlsWrapper);
+    emulator_controls_tab -> setWidget(emulator_controls_wrapper);
     memory_tab -> setWidget(memory_view);
     register_tab -> setWidget(register_table);
-    build_log_tab -> setWidget(buildLog);
+    build_log_tab -> setWidget(build_log);
 
     // Dock widget title updates
     connect(memory_tab, &QDockWidget::topLevelChanged, this, &MainWindow::updateDockTitleMemory);
@@ -660,57 +660,57 @@ MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
 
     // Set up menus
 
-    newAction = new QAction("New File");
-    openAction = new QAction("Open");
-    saveAction = new QAction("Save");
-    saveAsAction = new QAction("Save As");
-    closeAction = new QAction("Close");
+    new_action = new QAction("New File");
+    open_action = new QAction("Open");
+    save_action = new QAction("Save");
+    save_as_action = new QAction("Save As");
+    close_action = new QAction("Close");
 
-    buildAction = new QAction(tr("&Build"));
+    build_action = new QAction(tr("&Build"));
 
-    newAction -> setShortcut(Qt::CTRL | Qt::Key_N);
-    openAction -> setShortcut(Qt::CTRL | Qt::Key_O);
-    saveAction -> setShortcut(Qt::CTRL | Qt::Key_S);
-    saveAsAction -> setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_S);
-    closeAction -> setShortcut(Qt::CTRL | Qt::Key_W);
-    buildAction -> setShortcut(Qt::Key_F5);
+    new_action -> setShortcut(Qt::CTRL | Qt::Key_N);
+    open_action -> setShortcut(Qt::CTRL | Qt::Key_O);
+    save_action -> setShortcut(Qt::CTRL | Qt::Key_S);
+    save_as_action -> setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_S);
+    close_action -> setShortcut(Qt::CTRL | Qt::Key_W);
+    build_action -> setShortcut(Qt::Key_F5);
 
-    fileMenu = menuBar() -> addMenu(tr("&File"));
-    buildMenu = menuBar() -> addMenu(tr("&Build"));
+    file_menu = menuBar() -> addMenu(tr("&File"));
+    build_menu = menuBar() -> addMenu(tr("&Build"));
 
-    fileMenu->addAction(newAction);
-    fileMenu->addAction(openAction);
-    fileMenu->addAction(saveAction);
-    fileMenu->addAction(saveAsAction);
-    fileMenu->addAction(closeAction);
+    file_menu->addAction(new_action);
+    file_menu->addAction(open_action);
+    file_menu->addAction(save_action);
+    file_menu->addAction(save_as_action);
+    file_menu->addAction(close_action);
 
-    buildMenu -> addAction(buildAction);
+    build_menu -> addAction(build_action);
 
-    connect(newAction, &QAction::triggered, this, &MainWindow::handleMenuNew);
-    connect(openAction, &QAction::triggered, this, &MainWindow::handleMenuOpen);
-    connect(saveAsAction, &QAction::triggered, this, &MainWindow::handleMenuSaveAs);
-    connect(saveAction, &QAction::triggered, this, &MainWindow::handleMenuSave);
-    connect(closeAction, &QAction::triggered, this, &MainWindow::handleMenuClose);
+    connect(new_action, &QAction::triggered, this, &MainWindow::handleMenuNew);
+    connect(open_action, &QAction::triggered, this, &MainWindow::handleMenuOpen);
+    connect(save_as_action, &QAction::triggered, this, &MainWindow::handleMenuSaveAs);
+    connect(save_action, &QAction::triggered, this, &MainWindow::handleMenuSave);
+    connect(close_action, &QAction::triggered, this, &MainWindow::handleMenuClose);
 
-    connect(buildAction, &QAction::triggered, this, &MainWindow::compileAndLoad);
+    connect(build_action, &QAction::triggered, this, &MainWindow::compileAndLoad);
 
     // Toolbar
-    toolBar = new QToolBar();
-    fileDropdown =  new QComboBox();
-    fileDropdown -> setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    fileDropdownAction = toolBar -> addWidget(fileDropdown);
+    tool_bar = new QToolBar();
+    file_dropdown =  new QComboBox();
+    file_dropdown -> setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    file_dropdown_action = tool_bar -> addWidget(file_dropdown);
 
-    loadedFiles = new std::vector<LoadedFile>;
+    loaded_files = new std::vector<LoadedFile>;
 
-    connect(fileDropdown, &QComboBox::currentIndexChanged, this, &MainWindow::updateOpenFile);
+    connect(file_dropdown, &QComboBox::currentIndexChanged, this, &MainWindow::updateOpenFile);
 
     // Add everything to the window
-    this -> setCentralWidget(editorContainer);
+    this -> setCentralWidget(editor_container);
     this -> addDockWidget(Qt::LeftDockWidgetArea, memory_tab);
     this -> addDockWidget(Qt::RightDockWidgetArea, register_tab);
     this -> addDockWidget(Qt::RightDockWidgetArea, emulator_controls_tab);
     this -> addDockWidget(Qt::BottomDockWidgetArea, build_log_tab);
-    this -> addToolBar(toolBar);
+    this -> addToolBar(tool_bar);
 
     // Set the size for the build log tab
     this -> resizeDocks({build_log_tab}, {kBuildLogDefaultSize}, Qt::Vertical);
@@ -733,13 +733,13 @@ MainWindow::~MainWindow() {
     delete clock_speed_value;
     delete real_clock_speed_label;
     delete real_clock_speed_value;
-    delete emulatorControlsWrapper;
+    delete emulator_controls_wrapper;
 
     delete editor;
-    delete editorContainer;
-    delete editorTitle;
+    delete editor_container;
+    delete editor_title;
 
-    delete buildLog;
+    delete build_log;
 
     delete build_button;
 
@@ -748,25 +748,25 @@ MainWindow::~MainWindow() {
     delete emulator_controls_tab;
     delete build_log_tab;
 
-    delete fileMenu;
-    delete buildMenu;
+    delete file_menu;
+    delete build_menu;
 
-    delete saveAction;
-    delete saveAsAction;
-    delete newAction;
-    delete openAction;
-    delete closeAction;
-    delete buildAction;
+    delete save_action;
+    delete save_as_action;
+    delete new_action;
+    delete open_action;
+    delete close_action;
+    delete build_action;
 
-    delete toolBar;
-    delete fileDropdown;
-    delete fileDropdownAction;
+    delete tool_bar;
+    delete file_dropdown;
+    delete file_dropdown_action;
 
-    delete loadedFiles;
+    delete loaded_files;
 
-    delete openDialog;
+    delete open_dialog;
 
-    delete syntaxHighlighter;
+    delete syntax_highlighter;
 
     delete ui;
 }

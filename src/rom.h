@@ -14,7 +14,7 @@ public:
 
 private:
     uint8_t** memories;
-    size_t currentBankNumber;
+    size_t current_bank_number;
     const size_t kNumBankedMemories;
     const size_t memorySize;
 };

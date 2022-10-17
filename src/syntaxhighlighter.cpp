@@ -20,37 +20,37 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent): QSyntaxHighlighter(
 
         // Retrieve the settings
         QStringList keys = settings.childKeys();
-        HighlightingRule newRule;
-        QTextCharFormat newFormat;
+        HighlightingRule new_rule;
+        QTextCharFormat new_format;
         // Iterate over every key in the group, each key defines a formatting parameter or the pattern to be matched
         for(auto& key: keys){
             // Parse each key and apply the style/set the pattern
             // TODO: This is awful
             if(key == "pattern"){
-                newRule.pattern = QRegularExpression(settings.value(key).toString());
-                newRule.pattern.setPatternOptions(QRegularExpression::PatternOption::CaseInsensitiveOption);
+                new_rule.pattern = QRegularExpression(settings.value(key).toString());
+                new_rule.pattern.setPatternOptions(QRegularExpression::PatternOption::CaseInsensitiveOption);
             }else if(key == "italic"){
-                newFormat.setFontItalic(settings.value(key) == "yes");
+                new_format.setFontItalic(settings.value(key) == "yes");
             }else if(key == "weight"){
-                newFormat.setFontWeight(settings.value(key).toInt());
+                new_format.setFontWeight(settings.value(key).toInt());
             }else if(key == "underline"){
-                newFormat.setFontUnderline(settings.value(key) == "yes");
+                new_format.setFontUnderline(settings.value(key) == "yes");
             }else if(key == "colour"){
                 auto val = settings.value(key);
-                QBrush newForeground;
+                QBrush new_foreground;
                 QColor colour;
                 colour.setNamedColor(val.toString());
-                newForeground.setColor(colour);
-                newForeground.setStyle(Qt::SolidPattern);
-                newFormat.setForeground(newForeground);
+                new_foreground.setColor(colour);
+                new_foreground.setStyle(Qt::SolidPattern);
+                new_format.setForeground(new_foreground);
             }else if(key == "order"){
-                newRule.order = settings.value(key).toInt();
+                new_rule.order = settings.value(key).toInt();
             }else{
                 Log::Warning() << "Unknown key " << key << " in group " << group << " when parsing syntax highlighting settings. Ignoring and continuing.";
             }
         }
-        newRule.format = newFormat;
-        rules.push_back(newRule);
+        new_rule.format = new_format;
+        rules.push_back(new_rule);
         settings.endGroup();
     }
 

@@ -29,8 +29,8 @@ public:
      */
     virtual uint8_t getValue(uint16_t address) = 0;
 
-    virtual uint16_t getBaseAddress(){return baseAddress;}
-    virtual size_t getAddressSpaceLength(){return addressSpaceLength;}
+    virtual uint16_t getBaseAddress(){return base_address;}
+    virtual size_t getAddressSpaceLength(){return address_space_length;}
 
     virtual ~MemoryMappedDevice(){};
 
@@ -44,16 +44,16 @@ signals:
 
 protected:
 
-    MemoryMappedDevice(uint16_t baseAddress, size_t addressSpaceLength) : baseAddress{baseAddress}, addressSpaceLength{addressSpaceLength} {}
+    MemoryMappedDevice(uint16_t base_address, size_t address_space_length) : base_address{base_address}, address_space_length{address_space_length} {}
     /**
      * The base address of the device
      */
-    const uint16_t baseAddress;
+    const uint16_t base_address;
 
     /**
      * The size of the address space occupied by the device
      */
-    const size_t addressSpaceLength;
+    const size_t address_space_length;
 };
 
 #endif // MEMORYMAPPEDDEVICE_H

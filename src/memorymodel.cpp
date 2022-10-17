@@ -71,7 +71,7 @@ QVariant MemoryModel::data(const QModelIndex &index, int role) const{
     // Background brush role
     if(role == Qt::BackgroundRole){
         // If the cell was newly changed, highlight the cell by painting the background
-        if(std::find(newlyChangedCells.begin(), newlyChangedCells.end(), index) != newlyChangedCells.end()){
+        if(std::find(newly_changed_cells.begin(), newly_changed_cells.end(), index) != newly_changed_cells.end()){
             return QColor(Qt::yellow);
         }
     }
@@ -85,10 +85,10 @@ bool MemoryModel::setData(const QModelIndex &index, const QVariant &value, int r
     if(index.isValid() && index.column() == this -> columnCount() - 1){
         // Grab the string data
         QString input = value.toString();
-        std::string inputString = input.toStdString();
-        uint8_t *data = (uint8_t*) inputString.data();
+        std::string input_string = input.toStdString();
+        uint8_t *data = (uint8_t*) input_string.data();
         // Set bytes from this row
-        for(int i = 0; i < inputString.size(); i++){
+        for(int i = 0; i < input_string.size(); i++){
             emulator -> setMemoryValue(index.row() * (this -> columnCount() - 1) + i, data[i]);
         }
         return true;
@@ -119,31 +119,31 @@ Qt::ItemFlags MemoryModel::flags(const QModelIndex &index) const{
  * @param topLeft Top left of the area to be updated. Defaults to (0,0)
  * @param bottomRight Bottom right of the area to be updated. Defaults to the bottom left of the table
  */
-void MemoryModel::updateData(QModelIndex topLeft, QModelIndex bottomRight){
-    if(!topLeft.isValid()){
-        topLeft = index(0,0);
+void MemoryModel::updateData(QModelIndex top_left, QModelIndex bottom_right){
+    if(!top_left.isValid()){
+        top_left = index(0,0);
     }
-    if(!bottomRight.isValid()){
-        bottomRight = index(this -> rowCount(), this -> columnCount());
+    if(!bottom_right.isValid()){
+        bottom_right = index(this -> rowCount(), this -> columnCount());
     }
-    emit dataChanged(topLeft, bottomRight);
+    emit dataChanged(top_left, bottom_right);
 }
 
 void MemoryModel::handleMemoryChanged(uint16_t address){
     // Get an index to the cell and ASCII dump that was changed
     int row = address / 0x10;
     int column = address % 0x10;
-    QModelIndex cellToUpdate = this -> index(row, column);
-    QModelIndex dumpToUpdate = this -> index(row, this -> columnCount() - 1);
+    QModelIndex cell_to_update = this -> index(row, column);
+    QModelIndex dump_to_update = this -> index(row, this -> columnCount() - 1);
     // Add cell and ASCII dump to the list of newly changed cells
-    this -> newlyChangedCells.push_back(cellToUpdate);
-    this -> newlyChangedCells.push_back(dumpToUpdate);
+    this -> newly_changed_cells.push_back(cell_to_update);
+    this -> newly_changed_cells.push_back(dump_to_update);
     // Update the cell and dump
-    this -> updateData(cellToUpdate, cellToUpdate);
-    this -> updateData(dumpToUpdate, dumpToUpdate);
+    this -> updateData(cell_to_update, cell_to_update);
+    this -> updateData(dump_to_update, dump_to_update);
 }
 
 void MemoryModel::clearHighlight(){
-    newlyChangedCells.clear();
+    newly_changed_cells.clear();
     this -> updateData();
 }
