@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>resources/img/icon.xpm</file>
-		<file>config/syntax_highlight.ini</file>
-    </qresource>
-</RCC>

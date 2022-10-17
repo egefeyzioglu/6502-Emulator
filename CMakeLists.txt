@@ -21,27 +21,27 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-        mos6502.cpp
-        mos6502.h
-        emulator.h
-        emulator.cpp
-        resources.qrc
-        log.h
-        log.cpp
-        loadedfile.h
-        syntaxhighlighter.h
-        syntaxhighlighter.cpp
-        memorymodel.h
-        memorymodel.cpp
-        memorymappeddevice.h
-        programram.h
-        programram.cpp
-        rom.h
-        rom.cpp
+        src/main.cpp
+        src/mainwindow.cpp
+        src/mainwindow.h
+        src/mainwindow.ui
+        src/mos6502.cpp
+        src/mos6502.h
+        src/emulator.h
+        src/emulator.cpp
+        src/resources.qrc
+        src/log.h
+        src/log.cpp
+        src/loadedfile.h
+        src/syntaxhighlighter.h
+        src/syntaxhighlighter.cpp
+        src/memorymodel.h
+        src/memorymodel.cpp
+        src/memorymappeddevice.h
+        src/programram.h
+        src/programram.cpp
+        src/rom.h
+        src/rom.cpp
 )
 
 
