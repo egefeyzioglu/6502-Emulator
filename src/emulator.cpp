@@ -50,6 +50,7 @@ mos6502 *Emulator::get6502(){
 }
 
 uint8_t Emulator::getMemoryValue(uint16_t address){
+    // Find the memory device corresponding to the given address and get its value
     for(auto const &memoryDevice : this -> memory_devices){
         if(memoryDevice.first.base_address <= address && memoryDevice.first.end_address >= address){
             return memoryDevice.second->getValue(address);
@@ -64,6 +65,7 @@ uint8_t Emulator::getMemoryValue(uint16_t address){
  * @param value
  */
 void Emulator::setMemoryValue(uint16_t address, uint8_t value){
+    // Find the memory device corresponding to the given address and set its value
     for(auto const &memoryDevice : this -> memory_devices){
         if(memoryDevice.first.base_address <= address && memoryDevice.first.end_address >= address){
             memoryDevice.second->setValue(address, value);
@@ -143,7 +145,8 @@ void EmulatorHelper::busWrite(uint16_t address, uint8_t value){
 }
 
 void EmulatorHelper::replaceMemory(uint8_t *new_contents, size_t offset, size_t length){
-    memcpy((emulator -> memory) + offset, new_contents, length);
+    memcpy((emulator -> memory) + offset, new_contents, length); // TODO: Remove
+    // Set the memory contents in the given range from the given buffer
     for(int offset_in_new_contents = 0; offset_in_new_contents < length; offset_in_new_contents++){
         emulator -> setMemoryValue(offset + offset_in_new_contents, new_contents[offset_in_new_contents]);
     }

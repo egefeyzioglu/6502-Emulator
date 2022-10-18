@@ -14,7 +14,6 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent): QSyntaxHighlighter(
 
     // Iterate over every group, every group is a different type of string that needs to be highlighted
     QStringList groups = settings.childGroups();
-
     for(auto& group : groups){
         settings.beginGroup(group);
 

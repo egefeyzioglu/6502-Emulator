@@ -17,13 +17,28 @@ public:
 protected:
     void highlightBlock(const QString &text) override;
 private:
+    /**
+     * An individual highlighting rule
+     */
     struct HighlightingRule{
-        //HighlightingRule(QRegularExpression pattern, QTextCharFormat format) : pattern(pattern), format(format){}
+        /**
+         * Regex where this rule should apply
+         */
         QRegularExpression pattern;
+        /**
+         * The formatting that should be used when this rule applies
+         */
         QTextCharFormat format;
+        /**
+         * Order of importance of this rule
+         * Higher = more important, checked later
+         */
         int order;
     };
 
+    /**
+     * `HighlightingRule`s known to the syntax highlighter
+     */
     std::vector<HighlightingRule> rules;
 };
 

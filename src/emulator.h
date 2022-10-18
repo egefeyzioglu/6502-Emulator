@@ -13,18 +13,43 @@ class Emulator;
 
 // Helper functions for memory access
 namespace EmulatorHelper{
-    // Associate emulator instance to these functions
+    /**
+     * Associate emulator instance to these functions
+     *
+     * @param emulator The emulator object
+     */
     void registerEmulator(Emulator *emulator);
-    // Remove association of emulator instance from these functions
+
+    /**
+     * Remove association of emulator instance from these functions
+     */
     void deregisterEmulator();
+
     // The emulator instance registered
     // Emulator *emulator; // Not declaring here to avoid double declaration when this file is included
 
-    // Memory - CPU interface, set
+    /**
+     * Memory - CPU interface, set
+     * @param address
+     * @param value
+     */
     void busWrite(uint16_t address, uint8_t value);
-    // Memory - CPU interface, get
+
+    /**
+     * Memory - CPU interface, get
+     * @param address
+     * @return
+     */
     uint8_t busRead(uint16_t address);
 
+    /**
+     *
+     * Replace contents of a new block with the contents of the provided buffer
+     *
+     * @param new_contents
+     * @param offset Offset into the memory
+     * @param lenght Length of the buffer
+     */
     void replaceMemory(uint8_t *new_contents, size_t offset, size_t lenght);
 }
 
@@ -37,7 +62,14 @@ public:
     void runCPU();
     void interrupt();
 
+    /**
+     * Whether the emulator should keep running
+     */
     bool should_run = true;
+
+    /**
+     * The emulator instance
+     */
     Emulator *emulator;
 };
 
@@ -50,18 +82,34 @@ public:
     Emulator();
     ~Emulator();
 
-    // Get the CPU instance
+    /**
+     * Get the CPU instance
+     */
     mos6502 *get6502();
 
-    // Get value from memory address
+    /**
+     * Get value from memory address
+     * @param address
+     * @return The value, 0xFF if the address is invalid
+     */
     uint8_t getMemoryValue(uint16_t address);
-    // Set value at memory address
+
+    /**
+     * Set value at memory address
+     * @param address
+     * @param value
+     */
     void setMemoryValue(uint16_t address, uint8_t value);
 
-    // Step one instruction
+    /**
+     * @brief Step one instruction
+     * @return The number of cycles the instruction took
+     */
     int step();
 
-    // Reset the CPU
+    /**
+     * Reset the CPU
+     */
     void resetCPU();
 
     //#define lowerMemory
@@ -111,7 +159,9 @@ public:
      */
     void interrupt();
 
-
+    /**
+     * Registers for the CPU
+     */
     enum Register{
         A,
         P,
@@ -121,12 +171,25 @@ public:
         Y
     };
 
+    /**
+     * Used to store an address range
+     */
     struct AddressRange{
+        /**
+         * AddressRange constructor
+         * @param base_address
+         * @param end_address
+         */
         AddressRange(uint16_t base_address, uint16_t end_address) : base_address{base_address}, end_address{end_address} {};
 
         uint16_t base_address;
         uint16_t end_address;
 
+        /**
+         * Ordered by base address
+         *
+         * TODO: Implement the other comparison operators
+         */
         bool operator<(const AddressRange rhs) const{
             return this -> base_address < rhs.base_address;
         }
@@ -140,17 +203,46 @@ public:
     void deviceMemoryChanged(uint16_t address);
 
 signals:
+    /**
+     * Notify that the memory changed at given address
+     *
+     * @param address
+     */
     void memoryChanged(uint16_t address);
+
+    /**
+     * Notify that an instruction was ran
+     */
     void instructionRan();
+
+    /**
+     * Notify that given registers were updated
+     *
+     * @param registers_to_update
+     */
     void registersChanged(std::vector<Register> registers_to_update);
+
+    /**
+     * Used to start the RunWorker
+     */
     void startRunWorker();
+
+    /**
+     * Request to stop the RunWorker
+     */
     void interruptRunWorker();
 
 private:
-    // The CPU instance
+    /**
+     * The CPU instance
+     */
     mos6502 *cpu;
 
-    // The memory array
+    /**
+     * The memory array
+     *
+     * TODO: Remove
+     */
     uint8_t *memory;
 
     /**
@@ -166,6 +258,9 @@ private:
      */
     EmulatorState *previous_state;
 
+    /**
+     * The worker thread
+     */
     QThread *worker_thread;
 
     /**

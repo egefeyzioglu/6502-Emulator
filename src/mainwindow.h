@@ -31,6 +31,7 @@ public:
      * Updates the QDockWidget title depending on whether it is docked or not
      */
     void updateDockTitle(QDockWidget *dock_widget, bool is_floating);
+    // Slots for when the dock widgets start and stop floating
     void updateDockTitleMemory(bool is_floating);
     void updateDockTitleRegisters(bool is_floating);
     void updateDockTitleControls(bool is_floating);
@@ -86,6 +87,8 @@ public:
 
     /**
      * Sets up the memory view QTableView object
+     *
+     * TODO: Don't destroy the QTableWidget every time
      *
      * @param memory_table
      */
@@ -191,10 +194,14 @@ public:
 private:
     Ui::MainWindow *ui;
 
+    // The memory display/model
     QTableView *memory_view = nullptr;
     MemoryModel *memory_model = nullptr;
+
+    // The register table
     QTableWidget *register_table = nullptr;
 
+    // The emulator control stuff and the wrapper
     QPushButton *step_button = nullptr;
     QPushButton *run_button = nullptr;
     QPushButton *interrupt_button = nullptr;
@@ -205,22 +212,28 @@ private:
     QWidget *emulator_controls_wrapper = nullptr;
 
 
+    // The editor, its title, and their container
     QTextEdit *editor = nullptr;
     QWidget *editor_container = nullptr;
     QLabel *editor_title = nullptr;
 
+    // The build output area
     QPlainTextEdit *build_log = nullptr;
 
+    // The build button, unused (TODO: Remove)
     QPushButton *build_button = nullptr;
 
+    // The dock widgets
     QDockWidget *register_tab = nullptr;
     QDockWidget *memory_tab = nullptr;
     QDockWidget *emulator_controls_tab = nullptr;
     QDockWidget *build_log_tab = nullptr;
 
+    // The menus
     QMenu *file_menu = nullptr;
     QMenu *build_menu = nullptr;
 
+    // Actions in the menus (individual thingies you click on)
     QAction *save_action = nullptr;
     QAction *save_as_action = nullptr;
     QAction *new_action = nullptr;
@@ -228,14 +241,24 @@ private:
     QAction *close_action = nullptr;
     QAction *build_action = nullptr;
 
+    // The toolbar and the stuff in the toolbar
     QToolBar *tool_bar = nullptr;
     QComboBox *file_dropdown = nullptr;
     QAction *file_dropdown_action = nullptr;
 
+    /**
+     * Vector of the `LoadedFile`s opened by the editor
+     */
     std::vector<LoadedFile> *loaded_files = nullptr;
 
+    /**
+     * The open file dialog
+     */
     QFileDialog *open_dialog = nullptr;
 
+    /**
+     * The syntax highlighter object
+     */
     SyntaxHighlighter *syntax_highlighter = nullptr;
 
     /**

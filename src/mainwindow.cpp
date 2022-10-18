@@ -40,17 +40,12 @@
 // The global emulator instance
 extern Emulator *emulator;
 
-/**
- * Updates the memory view QTableWidget object, reads from emulator using getMemoryValue
- *
- * TODO: Don't destroy the QTableWidget every time
- *
- * @param memory_table
- */
 void MainWindow::setUpMemoryTable(QTableView *&memory_view){
+    // Create and format the memory table
+
     constexpr int kMinimumHorizontalSize = 30;
 
-    memory_view = new QTableView();
+    memory_view = new QTableView(); // TODO: Don't leak memory on subsequent calls
     memory_model = new MemoryModel(emulator->kMemorySize, emulator, this);
     memory_view -> setModel(memory_model);
     memory_view -> setShowGrid(true);
@@ -62,15 +57,9 @@ void MainWindow::setUpMemoryTable(QTableView *&memory_view){
     memory_view -> resizeRowsToContents();
 }
 
-/**
- * Updates the register view QTableWidget object, reads from emulator using getMemoryValue
- *
- * TODO: Don't destroy the QTableWidget every time
- *
- * @param register_table
- */
 void MainWindow::updateRegisterTable(QTableWidget *&register_table){
 
+    // Register format strings
     QString reg_A_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetA()), emulator->get6502()->GetA());
     QString reg_X_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetX()), emulator->get6502()->GetX());
     QString reg_Y_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetY()), emulator->get6502()->GetY());
@@ -81,9 +70,13 @@ void MainWindow::updateRegisterTable(QTableWidget *&register_table){
                                                     emulator->get6502()->GetPC());
     QString reg_status_value_string = QString::asprintf("%c%c%c%c%c%c%c%c (0x%02x)" , BYTE_TO_BINARY(emulator->get6502()->GetPC()), emulator->get6502()->GetPC());
 
+
     if(register_table == nullptr){
+        // If the table doesn't exist, create it and set it up
+
         register_table = new QTableWidget(6, 1);
         connect(emulator, &Emulator::registersChanged, this, &MainWindow::handleRegistersChanged);
+
         // Set up titles
 
         // Register A title
@@ -136,6 +129,7 @@ void MainWindow::updateRegisterTable(QTableWidget *&register_table){
         QTableWidgetItem *reg_status_value = new QTableWidgetItem(reg_status_value_string);
         register_table -> setItem(5, 0, reg_status_value);
     } else {
+        // If the table already exists, just update the register values
         // Register A
         register_table -> item(0,0) -> setText(reg_A_value_string);
         // Register X
@@ -154,12 +148,6 @@ void MainWindow::updateRegisterTable(QTableWidget *&register_table){
     register_table -> resizeColumnsToContents();
 }
 
-/**
- * Updates the QDockWidget title depending on whether it is docked or not
- *
- * @param dockWidget the dock widget
- * @param isFloating is this widget floating
- */
 void MainWindow::updateDockTitle(QDockWidget  *dock_widget, bool is_floating){
 
     // Seperator between base title and kWindowTitle
@@ -335,19 +323,23 @@ void MainWindow::handleMenuClose(){
 }
 
 void MainWindow::updateOpenFileContents(){
+    // Get the current file object, update its contents to the contents of the editor, and mark it as unsaved
     auto current_file = this -> loaded_files -> at(this -> file_dropdown -> currentIndex());
     current_file.contents = this -> editor -> toPlainText();
     current_file.saved_since_last_edit = false;
 }
 
 void MainWindow::updateOpenFile(int selectedFileIndex){
+    // Get the requested file object and set the contents of the editor to its contents
     if(loaded_files->size() > 0) this -> editor -> setPlainText(this -> loaded_files -> at(selectedFileIndex).contents);
 }
 
 void MainWindow::handleRegistersChanged(std::vector<Emulator::Register> registers_to_update){
+    // Clear old highlighting
     for(int row = 0; row < register_table -> rowCount(); row++){
         register_table -> item(row,0) -> setBackground(QBrush(Qt::white));
     }
+    // Iterate over the list of updated registers and highlight them
     for(Emulator::Register reg: registers_to_update){
         switch(reg){
         case Emulator::Register::A:
@@ -374,11 +366,12 @@ void MainWindow::handleRegistersChanged(std::vector<Emulator::Register> register
 
 void MainWindow::emulatorStep(){
     emulator->step();
+    // The register table must be manually updated since it is a default QTableWidget
     updateRegisterTable(register_table);
 }
 
 void MainWindow::addToBuildLog(QString newContent){
-
+    // Append to build log then scroll it to the very bottom
     build_log -> setPlainText(build_log -> toPlainText() + "\n" + newContent);
     build_log -> verticalScrollBar() -> setValue(build_log -> verticalScrollBar() -> maximum());
 }
@@ -452,6 +445,7 @@ void MainWindow::compileAndLoad(){
 
 void MainWindow::resetEmulator(){
     emulator -> resetCPU();
+    // The register table must be manually updated since it is a default QTableWidget
     updateRegisterTable(register_table);
 }
 
@@ -480,12 +474,13 @@ void MainWindow::setUpEditor(QWidget *&editor_container, QTextEdit *&editor, QLa
 }
 
 void MainWindow::setUpBuildLog(QPlainTextEdit *&compiler_log){
+    // Create a new plain text editor, disallow editing but allow everything else
     compiler_log = new QPlainTextEdit();
     compiler_log -> setTextInteractionFlags(Qt::TextBrowserInteraction | Qt::TextSelectableByKeyboard);
 }
 
 void MainWindow::setUpEmulatorControls(QWidget *&emulator_controls_wrapper){
-    // Emulator controls
+    // Create the emulator controls
     step_button = new QPushButton(tr("Step"));
     run_button = new QPushButton(tr("Run"));
     interrupt_button = new QPushButton(tr("Interrupt"));
@@ -494,9 +489,11 @@ void MainWindow::setUpEmulatorControls(QWidget *&emulator_controls_wrapper){
     real_clock_speed_label = new QLabel(tr("Actual Clock Speed"));
     real_clock_speed_value = new QLabel(tr("Stopped"));
 
+    // Create the wrapper and the layout
     QGridLayout *emulator_controls_layout = new QGridLayout();
     emulator_controls_wrapper = new QWidget();
 
+    // Add the controls to the layout, and add the layout to the wrapper
     emulator_controls_layout -> addWidget(step_button, 0, 0, 1, 1);
     emulator_controls_layout -> addWidget(run_button, 0, 1, 1, 1);
     emulator_controls_layout -> addWidget(interrupt_button, 0, 2, 1, 1);
@@ -507,12 +504,15 @@ void MainWindow::setUpEmulatorControls(QWidget *&emulator_controls_wrapper){
 
     emulator_controls_wrapper -> setLayout(emulator_controls_layout);
 
+    // Set initial actual clock speed value
     clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> clock_speed));
 
+    // Set the actual clock speed value to auto update
     QTimer *clock_speed_refresh_timer = new QTimer(this);
     connect(clock_speed_refresh_timer, &QTimer::timeout, this, &MainWindow::updateRealClockRate);
     clock_speed_refresh_timer -> start(kClockSpeedRefreshMillis);
 
+    // Bind the emulator controls
     connect(clock_speed_value, &QLineEdit::editingFinished, this, &MainWindow::updateClockRate);
     connect(step_button, &QPushButton::clicked, this, &MainWindow::emulatorStep);
     connect(run_button, &QPushButton::clicked, emulator, &Emulator::run);
@@ -612,14 +612,17 @@ QString MainWindow::clockSpeedDoubleToString(double clock_speed){
 }
 
 void MainWindow::updateRealClockRate(){
+    // Get the real clock speed, format it, then set the label in the emulator controls
     real_clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> real_clock_speed));
 }
 
 void MainWindow::updateClockRate(){
+    // Parse the provided clock speed then if it is valid, set the emulator clock speed to it
     double clock_rate = parseClockSpeedString(clock_speed_value -> text().toStdString());
     if(clock_rate != -1){
         emulator -> clock_speed = clock_rate;
     }
+    // Then update the display
     clock_speed_value -> setText(clockSpeedDoubleToString(emulator -> clock_speed));
 }
 
@@ -628,6 +631,7 @@ MainWindow::MainWindow(std::string kWindowTitle, QWidget *parent)
     , ui(new Ui::MainWindow)
     , kWindowTitle(kWindowTitle)
 {
+    // Set up window
     this -> setWindowTitle(kWindowTitle.data());
     this -> setWindowIcon(QIcon(":/resources/img/icon.xpm"));
     this -> resize(1200,600);

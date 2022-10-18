@@ -5,6 +5,7 @@
 ROM::ROM(uint16_t base_address, size_t length, size_t kNumBankedMemories) : MemoryMappedDevice(base_address, length),
                                                                                 kNumBankedMemories{kNumBankedMemories},
                                                                                 memorySize{length}{
+    // Create and initialise the memory arrays
     memories = new uint8_t*[kNumBankedMemories];
     for(int bankNum = 0; bankNum < kNumBankedMemories; bankNum++){
         memories[bankNum] = new uint8_t[memorySize];
@@ -17,6 +18,7 @@ ROM::ROM(uint16_t base_address, size_t length, size_t kNumBankedMemories) : Memo
 }
 
 ROM::~ROM(){
+    // Delete both levels of the memrory array
     for(int bankNum = 0; bankNum < kNumBankedMemories; bankNum++){
         delete[] memories[bankNum];
     }

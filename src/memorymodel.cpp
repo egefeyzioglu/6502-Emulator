@@ -14,11 +14,11 @@ MemoryModel::MemoryModel(size_t kMemorySize, Emulator *emulator, QObject *parent
 MemoryModel::~MemoryModel(){}
 
 int MemoryModel::rowCount(const QModelIndex &parent) const{
-    return kMemorySize/0x10;
+    return kMemorySize/0x10; // There are 0x10 memory cells per row (kMemorySize/0x11 since the ASCII dump isn't included in kMemorySize)
 }
 
 int MemoryModel::columnCount(const QModelIndex &parent) const{
-    return 0x11;
+    return 0x11; // 0x10 memory cells + 1 column for the ASCII dump
 }
 
 QVariant MemoryModel::headerData(int section, Qt::Orientation orientation, int role) const{
@@ -113,19 +113,15 @@ Qt::ItemFlags MemoryModel::flags(const QModelIndex &index) const{
     return Qt::ItemIsEnabled | Qt::ItemIsEditable;
 }
 
-/**
- * Updates the views associated for the area specified
- *
- * @param topLeft Top left of the area to be updated. Defaults to (0,0)
- * @param bottomRight Bottom right of the area to be updated. Defaults to the bottom left of the table
- */
 void MemoryModel::updateData(QModelIndex top_left, QModelIndex bottom_right){
+    // If the top left or bottom right indexes are not provided, default to widest option
     if(!top_left.isValid()){
         top_left = index(0,0);
     }
     if(!bottom_right.isValid()){
         bottom_right = index(this -> rowCount(), this -> columnCount());
     }
+    // Send dataChanged for the range
     emit dataChanged(top_left, bottom_right);
 }
 
@@ -144,6 +140,7 @@ void MemoryModel::handleMemoryChanged(uint16_t address){
 }
 
 void MemoryModel::clearHighlight(){
+    // Clear the highlight requests and update everything
     newly_changed_cells.clear();
     this -> updateData();
 }

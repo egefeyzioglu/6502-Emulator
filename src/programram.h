@@ -13,6 +13,9 @@ public:
     uint8_t getValue(uint16_t address) override;
 
 private:
+    /**
+     * Buffer for the memory data
+     */
     uint8_t *memory;
 };
 
