@@ -191,8 +191,8 @@ public:
 private:
     Ui::MainWindow *ui;
 
-    QTableView *memory_view;
-    MemoryModel *memory_model;
+    QTableView *memory_view = nullptr;
+    MemoryModel *memory_model = nullptr;
     QTableWidget *register_table = nullptr;
 
     QPushButton *step_button = nullptr;
